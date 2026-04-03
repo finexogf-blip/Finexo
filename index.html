@@ -693,7 +693,7 @@ function step(q,hint,body,back,fn,lbl){
 // STEP 0 - Nombre
 function renderNombre(c){
   c.innerHTML = step('¿Cuál es tu nombre?','Así personalizamos tu diagnóstico.',
-    '<input class="diag-input" id="iNom" placeholder="Ej: Juan García" value="'+diagData.nombre+'" oninput="diagData.nombre=this.value" onkeydown="if(event.key==='Enter')nextN()">',
+    '<input class="diag-input" id="iNom" placeholder="Ej: Juan García" value="'+diagData.nombre+'" oninput="diagData.nombre=this.value" onkeydown="if(event.key===\'Enter\')nextN()">',
     -1,'nextN()');
   setTimeout(function(){ var el=document.getElementById('iNom'); if(el) el.focus(); },80);
 }
@@ -718,7 +718,7 @@ function renderDeudas(c){
     '<div class="diag-input-row"><div><div class="diag-label">Monto total (RD$)</div><input class="diag-input" id="dM" type="number" placeholder="150000"></div><div><div class="diag-label">Cuota mensual (RD$)</div><input class="diag-input" id="dC" type="number" placeholder="8500"></div></div>'+
     '<div class="diag-input-row"><div><div class="diag-label">Tasa de interés</div><input class="diag-input" id="dT" placeholder="Ej: 28% anual"></div><div><div class="diag-label">Tiempo restante</div><input class="diag-input" id="dTi" placeholder="Ej: 24 meses"></div></div>'+
     '<div class="diag-label" style="margin-bottom:8px">Estado</div>'+
-    '<div class="diag-options"><button class="diag-opt'+(selEstado==='al día'?' selected':'')+'" id="bAlDia" onclick="setEst('al día')">✅ Al día</button><button class="diag-opt'+(selEstado==='en mora'?' selected':'')+'" id="bMora" onclick="setEst('en mora')">⚠️ En mora</button></div>'+
+    '<div class="diag-options"><button class="diag-opt'+(selEstado==='al día'?' selected':'')+'" id="bAlDia" onclick="setEst(\'al día\')">✅ Al día</button><button class="diag-opt'+(selEstado==='en mora'?' selected':'')+'" id="bMora" onclick="setEst(\'en mora\')">⚠️ En mora</button></div>'+
     '<button class="diag-add-btn" onclick="addDebt()">+ Agregar esta deuda</button>',
     1,'renderStep(3)',diagData.deudas.length?'Continuar →':'Omitir →');
 }
@@ -741,7 +741,7 @@ function renderIngresos(c){
   c.innerHTML = step('¿Cuáles son tus fuentes de ingreso?','Agrega cada fuente. Puedes continuar sin agregar.',
     list+tBtns+
     '<div class="diag-input-row"><div><div class="diag-label">Monto (RD$)</div><input class="diag-input" id="iMonto" type="number" placeholder="40000" oninput="calcMens()"></div>'+
-    '<div><div class="diag-label" style="margin-bottom:6px">Frecuencia</div><div style="display:flex;gap:6px"><button class="diag-opt frec-opt'+(frecIngr==='Semanal'?' selected':'')+'" onclick="selFrecIngr('Semanal',this)">Semanal</button><button class="diag-opt frec-opt'+(frecIngr==='Quincenal'?' selected':'')+'" onclick="selFrecIngr('Quincenal',this)">Quincenal</button><button class="diag-opt frec-opt'+(frecIngr==='Mensual'?' selected':'')+'" onclick="selFrecIngr('Mensual',this)">Mensual</button></div></div></div>'+
+    '<div><div class="diag-label" style="margin-bottom:6px">Frecuencia</div><div style="display:flex;gap:6px"><button class="diag-opt frec-opt'+(frecIngr==='Semanal'?' selected':'')+'" onclick="selFrecIngr(\'Semanal\',this)">Semanal</button><button class="diag-opt frec-opt'+(frecIngr==='Quincenal'?' selected':'')+'" onclick="selFrecIngr(\'Quincenal\',this)">Quincenal</button><button class="diag-opt frec-opt'+(frecIngr==='Mensual'?' selected':'')+'" onclick="selFrecIngr(\'Mensual\',this)">Mensual</button></div></div></div>'+
     '<div id="mensualizado" style="font-size:12px;color:rgba(255,255,255,.4);margin:4px 0 12px"></div>'+
     '<button class="diag-add-btn" onclick="addIngreso()">+ Agregar esta fuente</button>'+
     (total?'<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white)">Total mensual: <strong>RD$'+total.toLocaleString()+'</strong></div>':''),
@@ -764,8 +764,8 @@ function nextIngresos(){ renderStep(4); }
 function renderGastos(c){
   var catF=['Vivienda (alquiler/hipoteca)','Vehículo (cuota/seguro)','Educación','Seguro médico','Servicios (luz, agua, internet)','Otro fijo'];
   var catV=['Alimentación','Transporte / gasolina','Entretenimiento','Ropa y calzado','Salud / medicamentos','Otro variable'];
-  var gfList=''; for(var i=0;i<diagData.gastos_fijos.length;i++){var g=diagData.gastos_fijos[i]; gfList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+g.categoria+' — RD$'+Number(g.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto('fijo','+i+')">✕</button></div>';}
-  var gvList=''; for(var j=0;j<diagData.gastos_variables.length;j++){var gv=diagData.gastos_variables[j]; gvList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+gv.categoria+' — RD$'+Number(gv.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto('variable','+j+')">✕</button></div>';}
+  var gfList=''; for(var i=0;i<diagData.gastos_fijos.length;i++){var g=diagData.gastos_fijos[i]; gfList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+g.categoria+' — RD$'+Number(g.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto(\'fijo\','+i+')">✕</button></div>';}
+  var gvList=''; for(var j=0;j<diagData.gastos_variables.length;j++){var gv=diagData.gastos_variables[j]; gvList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+gv.categoria+' — RD$'+Number(gv.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto(\'variable\','+j+')">✕</button></div>';}
   var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
   var totalV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
   var optF='<option value="">Categoría...</option>'; for(var k=0;k<catF.length;k++) optF+='<option>'+catF[k]+'</option>';
@@ -776,14 +776,14 @@ function renderGastos(c){
     '<div class="diag-label" style="color:var(--green-light);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Fijos</div>'+
     gfList+'<select class="diag-input" id="gfCat" style="margin-bottom:8px;font-size:13px">'+optF+'</select>'+
     '<input class="diag-input" id="gfMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">'+
-    '<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto('fijo')">+ Agregar</button>'+
+    '<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto(\'fijo\')">+ Agregar</button>'+
     (totalF?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalF.toLocaleString()+'</div>':'')+
     '</div>'+
     '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">'+
     '<div class="diag-label" style="color:var(--gold);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Variables</div>'+
     gvList+'<select class="diag-input" id="gvCat" style="margin-bottom:8px;font-size:13px">'+optV+'</select>'+
     '<input class="diag-input" id="gvMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">'+
-    '<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto('variable')">+ Agregar</button>'+
+    '<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto(\'variable\')">+ Agregar</button>'+
     (totalV?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalV.toLocaleString()+'</div>':'')+
     '</div></div>'+
     ((totalF+totalV)?'<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white);margin-top:12px">Total gastos: <strong>RD$'+(totalF+totalV).toLocaleString()+'</strong></div>':''),
