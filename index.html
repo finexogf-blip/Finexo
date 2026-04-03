@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finexo Advisory — Estructuración de Crédito y Capital Privado</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0D1F3C;--navy2:#152845;--green:#3A7D44;--green2:#4A9E57;--green-light:#6EC97A;--gold:#C8A951;--white:#FFFFFF;--offwhite:#F4F6F0;--gray:#8A9AB0;--text:#1A2B42;--border:rgba(255,255,255,0.1);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--navy);color:var(--white);overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--navy);}::-webkit-scrollbar-thumb{background:var(--green);border-radius:3px;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:14px 5%;display:flex;align-items:center;justify-content:space-between;transition:all .4s;}
+nav.scrolled{background:rgba(13,31,60,0.97);border-bottom:1px solid rgba(58,125,68,0.2);backdrop-filter:blur(12px);}
+.nav-logo img{height:52px;object-fit:contain;max-width:220px;mix-blend-mode:normal;}
+.nav-links{display:flex;gap:28px;list-style:none;align-items:center;}
+.nav-links a{color:rgba(255,255,255,0.75);text-decoration:none;font-size:14px;font-weight:500;letter-spacing:.5px;transition:color .2s;}
+.nav-links a:hover{color:var(--green-light);}
+.nav-cta{background:linear-gradient(135deg,var(--green),#2D6035);color:var(--white)!important;padding:10px 22px;border-radius:8px;font-weight:600!important;}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+.hamburger span{width:24px;height:2px;background:var(--white);border-radius:2px;}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--navy);z-index:199;flex-direction:column;align-items:center;justify-content:center;gap:32px;}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{color:var(--white);text-decoration:none;font-size:22px;font-weight:500;}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:120px 5% 80px;}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#0D1F3C 0%,#0F2A1E 50%,#0D1F3C 100%);}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(58,125,68,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(58,125,68,0.06) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%);}
+.hero-orb{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(58,125,68,0.15) 0%,transparent 70%);top:-100px;right:-100px;animation:pulse 6s ease-in-out infinite;}
+.hero-orb2{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(200,169,81,0.08) 0%,transparent 70%);bottom:-100px;left:10%;animation:pulse 8s ease-in-out infinite reverse;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);opacity:.7;}}
+.hero-content{position:relative;z-index:1;max-width:660px;}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(58,125,68,0.15);border:1px solid rgba(58,125,68,0.35);color:var(--green-light);font-size:12px;padding:6px 16px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px;animation:fadeUp .8s ease forwards;}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(42px,6vw,70px);font-weight:600;line-height:1.08;margin-bottom:22px;animation:fadeUp .8s .15s ease both;}
+.hero-title span{color:var(--green-light);font-style:italic;}
+.hero-sub{font-size:16px;color:rgba(255,255,255,0.6);line-height:1.8;max-width:520px;margin-bottom:38px;font-weight:300;animation:fadeUp .8s .3s ease both;}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;animation:fadeUp .8s .45s ease both;}
+.btn-primary{background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);padding:15px 30px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;transition:all .2s;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(58,125,68,0.35);}
+.btn-outline{background:transparent;color:var(--white);padding:15px 30px;border-radius:10px;text-decoration:none;font-weight:500;font-size:15px;border:1px solid rgba(255,255,255,0.25);transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
+.btn-outline:hover{border-color:var(--green-light);color:var(--green-light);}
+.hero-stats{position:absolute;right:5%;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:18px;z-index:1;animation:fadeUp .8s .6s ease both;}
+.stat-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px 24px;text-align:center;backdrop-filter:blur(10px);}
+.stat-card:nth-child(2){border-color:rgba(58,125,68,0.3);background:rgba(58,125,68,0.08);}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;line-height:1;}
+.stat-num span{color:var(--green-light);}
+.stat-label{font-size:12px;color:var(--gray);margin-top:4px;letter-spacing:.5px;}
+.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,0.3);font-size:11px;letter-spacing:2px;text-transform:uppercase;}
+.scroll-line{width:1px;height:44px;background:linear-gradient(to bottom,rgba(58,125,68,0.6),transparent);animation:sdown 2s ease-in-out infinite;}
+@keyframes sdown{0%{transform:scaleY(0);transform-origin:top;}50%{transform:scaleY(1);transform-origin:top;}51%{transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+/* SECTIONS */
+section{padding:96px 5%;}
+.section-tag{display:inline-block;background:rgba(58,125,68,0.12);border:1px solid rgba(58,125,68,0.3);color:var(--green-light);font-size:11px;padding:5px 14px;border-radius:20px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,4vw,50px);font-weight:600;line-height:1.15;margin-bottom:14px;}
+.section-title span{color:var(--green-light);font-style:italic;}
+.section-sub{font-size:16px;color:rgba(255,255,255,0.55);line-height:1.75;max-width:540px;font-weight:300;}
+
+/* SERVICES */
+#servicios{background:linear-gradient(180deg,var(--navy) 0%,#0A1A2E 100%);}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px;margin-top:52px;}
+.svc-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:30px;transition:all .3s;position:relative;overflow:hidden;}
+.svc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--green-light));transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.svc-card:hover{border-color:rgba(58,125,68,0.3);background:rgba(58,125,68,0.06);transform:translateY(-4px);}
+.svc-card:hover::before{transform:scaleX(1);}
+.svc-icon{width:50px;height:50px;background:rgba(58,125,68,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;}
+.svc-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;margin-bottom:10px;}
+.svc-desc{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:18px;}
+.svc-price{font-size:13px;color:var(--green-light);font-weight:600;border-top:1px solid rgba(255,255,255,0.08);padding-top:14px;}
+
+/* PROCESO */
+#proceso{background:#0A1A2E;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;margin-top:52px;position:relative;}
+.steps::before{content:'';position:absolute;top:38px;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(58,125,68,0.4),transparent);}
+.step{text-align:center;padding:20px 16px;}
+.step-num{width:76px;height:76px;border-radius:50%;background:rgba(58,125,68,0.1);border:2px solid rgba(58,125,68,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--green-light);position:relative;z-index:1;transition:all .3s;}
+.step:hover .step-num{background:rgba(58,125,68,0.2);border-color:var(--green-light);}
+.step-title{font-size:15px;font-weight:600;margin-bottom:8px;}
+.step-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.65;}
+
+/* SOBRE NOSOTROS */
+#sobre{background:linear-gradient(180deg,#0A1A2E 0%,var(--navy) 100%);}
+.sobre-wrap{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+.sobre-visual{position:relative;}
+.sobre-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px;position:relative;overflow:hidden;}
+.sobre-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--green-light));}
+.sobre-values{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:32px;}
+.val-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;transition:all .3s;}
+.val-card:hover{border-color:rgba(58,125,68,0.3);background:rgba(58,125,68,0.06);}
+.val-icon{font-size:22px;margin-bottom:10px;}
+.val-title{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--white);}
+.val-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;}
+.mision-text{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;line-height:1.7;color:rgba(255,255,255,0.85);font-style:italic;margin-bottom:24px;}
+.mision-text span{color:var(--green-light);font-style:normal;font-weight:600;}
+.pilares{display:flex;flex-direction:column;gap:14px;margin-top:8px;}
+.pilar{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;}
+.pilar-num{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--green-light);line-height:1;flex-shrink:0;width:32px;}
+.pilar-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+.pilar-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;}
+@media(max-width:900px){
+  .hero-stats{display:none;}
+  .agent-wrap,.mp-wrap,.contact-grid,.sobre-wrap,.mp-wrap{grid-template-columns:1fr;}
+  .sobre-values{grid-template-columns:1fr 1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .steps::before{display:none;}
+  .diag-input-row{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .nav-links{display:none;}
+  .hamburger{display:flex;}
+  section{padding:68px 5%;}
+  .footer-grid{grid-template-columns:1fr;}
+  .sobre-values{grid-template-columns:1fr;}
+  .fin-grid{grid-template-columns:1fr;}
+  .team-grid{grid-template-columns:1fr;}
+  .hero-title{font-size:38px;}
+  .adv-chat-panel{width:100vw;}
+  .steps{grid-template-columns:1fr 1fr;}
+  .diag-input-row{grid-template-columns:1fr;}
+  .gastos-grid{grid-template-columns:1fr!important;}
+}
+
+/* CONTACTO */
+#contacto{background:linear-gradient(180deg,var(--navy) 0%,#071220 100%);}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:52px;}
+.contact-info{display:flex;flex-direction:column;gap:18px;}
+.cinfo-item{display:flex;align-items:center;gap:14px;padding:17px 20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;text-decoration:none;color:var(--white);transition:all .2s;}
+.cinfo-item:hover{border-color:rgba(58,125,68,0.4);background:rgba(58,125,68,0.06);}
+.cinfo-icon{width:42px;height:42px;background:rgba(58,125,68,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.cinfo-label{font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.cinfo-val{font-size:15px;font-weight:500;}
+.contact-form{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:30px;}
+.form-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;margin-bottom:22px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:13px;color:var(--gray);margin-bottom:6px;letter-spacing:.3px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 15px;color:var(--white);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(58,125,68,0.5);}
+.form-group textarea{resize:vertical;min-height:90px;}
+.form-group select option{background:var(--navy2);}
+.form-submit{width:100%;background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);border:none;border-radius:10px;padding:14px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.form-submit:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(58,125,68,0.3);}
+.form-success{display:none;text-align:center;padding:30px 20px;color:var(--green-light);font-size:15px;line-height:1.7;}
+
+/* FOOTER */
+footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48px 5% 26px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;margin-bottom:36px;}
+.footer-brand img{height:42px;margin-bottom:14px;display:block;}
+.footer-brand p{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;max-width:270px;}
+.footer-col h4{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:14px;}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.footer-col ul a{color:rgba(255,255,255,0.5);text-decoration:none;font-size:14px;transition:color .2s;}
+.footer-col ul a:hover{color:var(--green-light);}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.06);padding-top:22px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.3);}
+.footer-domains{display:flex;gap:12px;}
+.footer-domains span{background:rgba(58,125,68,0.1);border:1px solid rgba(58,125,68,0.2);color:var(--green-light);padding:3px 10px;border-radius:6px;font-size:11px;}
+
+/* WHATSAPP */
+.wa-float{position:fixed;bottom:26px;right:26px;z-index:150;width:56px;height:56px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(37,211,102,0.4);cursor:pointer;transition:all .2s;text-decoration:none;}
+.wa-float:hover{transform:scale(1.1);}
+.wa-float svg{width:27px;height:27px;fill:var(--white);}
+
+/* AGENT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);}
+.modal-overlay.open{display:flex;}
+.modal-box{width:100%;max-width:660px;max-height:90vh;background:var(--navy2);border:1px solid rgba(58,125,68,0.25);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;}
+.modal-header{background:var(--navy);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(58,125,68,0.15);flex-wrap:wrap;gap:8px;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;}
+.modal-sub{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.modal-close{width:34px;height:34px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:rgba(255,255,255,0.6);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.modal-close:hover{background:rgba(255,255,255,0.15);color:var(--white);}
+.modal-body{flex:1;overflow-y:auto;padding:18px 18px 90px;}
+.modal-chat{display:flex;flex-direction:column;gap:11px;}
+.modal-input-area{position:sticky;bottom:0;background:var(--navy);border-top:1px solid rgba(58,125,68,0.15);padding:13px 18px;}
+.modal-input-row{display:flex;gap:10px;}
+.modal-inp-wrap{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;display:flex;padding:0 4px 0 13px;}
+.modal-inp-wrap:focus-within{border-color:rgba(58,125,68,0.5);}
+#chatInput{flex:1;background:transparent;border:none;outline:none;color:var(--white);font-family:'Outfit',sans-serif;font-size:14px;padding:12px 0;resize:none;max-height:80px;line-height:1.5;}
+#chatInput::placeholder{color:rgba(255,255,255,0.3);}
+.chat-send{width:40px;height:40px;background:linear-gradient(135deg,var(--green),#2A5C32);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.chat-send:hover{opacity:.85;}.chat-send:disabled{opacity:.35;cursor:not-allowed;}
+.chat-send svg{width:15px;height:15px;fill:var(--white);}
+
+/* CHAT MESSAGES */
+.cm{display:flex;gap:8px;animation:fuUp .3s ease forwards;opacity:0;}
+.cm.user{flex-direction:row-reverse;}
+@keyframes fuUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.cm-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px;}
+.cm-av.bot{background:linear-gradient(135deg,var(--green),#2A5C32);font-family:'Cormorant Garamond',serif;font-weight:700;}
+.cm-av.usr{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.12);}
+.cm-bub{max-width:80%;padding:11px 15px;border-radius:13px;font-size:13.5px;line-height:1.65;}
+.cm.bot .cm-bub{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.9);border-radius:4px 13px 13px 13px;}
+.cm.user .cm-bub{background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);font-weight:500;border-radius:13px 4px 13px 13px;}
+.typ-ind{display:flex;gap:8px;align-items:center;animation:fuUp .3s ease forwards;opacity:0;}
+.typ-dots{display:flex;gap:4px;padding:11px 15px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px 13px 13px 13px;}
+.typ-dots span{width:5px;height:5px;background:rgba(255,255,255,0.4);border-radius:50%;animation:td 1.2s ease infinite;}
+.typ-dots span:nth-child(2){animation-delay:.2s}.typ-dots span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.done-wrap{text-align:center;padding:18px;background:rgba(58,125,68,0.08);border:1px solid rgba(58,125,68,0.2);border-radius:13px;max-width:80%;align-self:center;}
+.done-wrap h3{font-family:'Cormorant Garamond',serif;font-size:19px;margin:8px 0 5px;}
+.done-wrap p{font-size:13px;color:rgba(255,255,255,0.55);line-height:1.65;}
+.ref-code{font-size:11px;color:rgba(255,255,255,0.25);margin-top:8px;}
+.div-line{text-align:center;color:rgba(255,255,255,0.2);font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:8px 0;}
+
+/* ADVISOR PANEL */
+.adv-panel{display:none;position:fixed;inset:0;z-index:400;background:var(--navy);overflow-y:auto;}
+.adv-panel.open{display:block;}
+.adv-topbar{background:rgba(13,31,60,0.97);border-bottom:1px solid rgba(58,125,68,0.2);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1;backdrop-filter:blur(10px);}
+.adv-topbar-title{font-family:'Cormorant Garamond',serif;font-size:19px;}
+.adv-topbar-sub{font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1.5px;}
+.adv-actions{display:flex;gap:10px;}
+.adv-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Outfit',sans-serif;transition:all .2s;}
+.adv-btn:hover{background:rgba(255,255,255,0.14);}
+.adv-btn.primary{background:linear-gradient(135deg,var(--green),#2A5C32);border-color:transparent;color:var(--white);}
+.adv-content{max-width:800px;margin:0 auto;padding:30px 22px 60px;}
+.rpt-card{background:#F4F6F0;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.rpt-hdr{background:var(--navy);padding:20px 26px;display:flex;justify-content:space-between;align-items:center;}
+.rpt-logo{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--green-light);}
+.rpt-logo span{color:var(--white);font-weight:400;}
+.rpt-meta{font-size:11px;color:rgba(255,255,255,0.4);text-align:right;line-height:1.6;}
+.rpt-body{padding:26px;color:var(--text);}
+.rpt-sec{margin-bottom:20px;}
+.rpt-sec-title{font-family:'Cormorant Garamond',serif;font-size:12px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:2px;padding-bottom:7px;border-bottom:1px solid #DDD;margin-bottom:11px;}
+.rpt-text{font-size:13.5px;line-height:1.75;color:#2D3748;white-space:pre-wrap;}
+.stress-pill{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.5px;margin-top:8px;}
+.sALTO{background:#FEE2E2;color:#991B1B}.sMEDIO{background:#FEF3C7;color:#92400E}.sBATJO{background:#D1FAE5;color:#065F46}
+.debt-row{padding:8px 0;border-bottom:1px solid #E8E4DB;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.debt-row:last-child{border-bottom:none}
+.tag-mora{background:#FEE2E2;color:#991B1B;font-size:11px;padding:2px 8px;border-radius:10px;}
+.tag-ok{background:#D1FAE5;color:#065F46;font-size:11px;padding:2px 8px;border-radius:10px;}
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.fin-box{background:#EAE3D5;border-radius:10px;padding:11px;}
+.fin-lbl{font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.fin-val{font-size:15px;font-weight:600;color:#0D1F3C;}
+.rec-box{background:linear-gradient(135deg,rgba(13,31,60,0.06),rgba(58,125,68,0.08));border-radius:12px;padding:15px;border:1px solid rgba(58,125,68,0.2);}
+.rec-name{font-size:16px;font-weight:700;color:#0D1F3C;margin-bottom:4px;}
+.rec-why{font-size:13px;color:#4A5568;margin-bottom:9px;}
+.rec-price{font-size:14px;font-weight:700;color:#2D6035;}
+.notes-box{background:#F0FDF4;padding:13px;border-radius:8px;border-left:3px solid var(--green);font-size:13.5px;line-height:1.75;color:#1A2B42;}
+.rpt-ftr{background:#EAE3D5;padding:11px 26px;font-size:11px;color:#6B7280;text-align:center;}
+
+
+
+/* DYNAMIC DIAGNOSTIC FORM */
+.diag-progress-wrap{padding:12px 24px 0;background:var(--navy);}
+.diag-progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+.diag-progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-light));border-radius:2px;transition:width .4s ease;}
+.diag-progress-label{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;text-transform:uppercase;padding-bottom:10px;}
+.diag-step{padding:28px 28px 24px;animation:fuUp .35s ease forwards;opacity:0;}
+.diag-question{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--white);margin-bottom:8px;line-height:1.3;}
+.diag-hint{font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:24px;line-height:1.6;}
+.diag-options{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
+.diag-opt{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 18px;color:rgba(255,255,255,0.8);font-size:14px;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif;}
+.diag-opt:hover{border-color:rgba(58,125,68,0.5);background:rgba(58,125,68,0.08);color:var(--white);}
+.diag-opt.selected{border-color:var(--green);background:rgba(58,125,68,0.15);color:var(--white);}
+.diag-input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:13px 16px;color:var(--white);font-family:'Outfit',sans-serif;font-size:14px;outline:none;margin-bottom:8px;transition:border-color .2s;}
+.diag-input:focus{border-color:rgba(58,125,68,0.5);}
+.diag-input::placeholder{color:rgba(255,255,255,0.3);}
+.diag-input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;}
+.diag-label{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:5px;letter-spacing:.3px;}
+.diag-debt-card{background:rgba(58,125,68,0.08);border:1px solid rgba(58,125,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.diag-debt-info{font-size:13.5px;color:var(--white);}
+.diag-debt-info span{font-size:12px;color:rgba(255,255,255,0.5);display:block;margin-top:2px;}
+.diag-debt-remove{background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .2s;}
+.diag-debt-remove:hover{background:rgba(192,57,43,0.2);color:#E74C3C;}
+.diag-add-btn{background:transparent;border:1px dashed rgba(58,125,68,0.4);border-radius:10px;padding:11px 18px;color:var(--green-light);font-size:13.5px;cursor:pointer;width:100%;font-family:'Outfit',sans-serif;transition:all .2s;margin-bottom:16px;}
+.diag-add-btn:hover{background:rgba(58,125,68,0.08);border-color:var(--green);}
+.diag-nav{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:12px;}
+.diag-back{background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:11px 22px;border-radius:10px;cursor:pointer;font-size:14px;font-family:'Outfit',sans-serif;transition:all .2s;}
+.diag-back:hover{border-color:rgba(255,255,255,0.3);color:var(--white);}
+.diag-next{background:linear-gradient(135deg,var(--green),#2A5C32);border:none;color:var(--white);padding:11px 28px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;transition:all .2s;flex:1;}
+.diag-next:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(58,125,68,0.3);}
+.diag-next:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.diag-summary{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.diag-sum-row{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:13px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.diag-sum-label{font-size:12px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.8px;flex-shrink:0;}
+.diag-sum-val{font-size:13.5px;color:var(--white);text-align:right;line-height:1.5;}
+.diag-done-wrap{text-align:center;padding:32px 20px;}
+.diag-done-icon{font-size:48px;margin-bottom:16px;}
+.diag-done-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--white);margin-bottom:10px;}
+.diag-done-text{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.75;max-width:400px;margin:0 auto;}
+.diag-ref{font-size:11px;color:rgba(255,255,255,0.25);margin-top:16px;}
+
+/* TERMS MODAL */
+.tc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:flex-start;justify-content:center;padding:40px 20px;backdrop-filter:blur(8px);overflow-y:auto;}
+.tc-overlay.open{display:flex;}
+.tc-box{width:100%;max-width:780px;background:var(--navy2);border:1px solid rgba(58,125,68,0.2);border-radius:20px;overflow:hidden;margin:auto;}
+.tc-header{background:var(--navy);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(58,125,68,0.15);position:sticky;top:0;z-index:1;}
+.tc-header-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;}
+.tc-header-sub{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.tc-close{width:36px;height:36px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:rgba(255,255,255,0.6);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.tc-close:hover{background:rgba(255,255,255,0.15);color:var(--white);}
+.tc-body{padding:32px 36px 40px;color:rgba(255,255,255,0.8);}
+.tc-body h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--white);margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(58,125,68,0.2);}
+.tc-body h2:first-child{margin-top:0;}
+.tc-body p{font-size:14px;line-height:1.8;margin-bottom:12px;color:rgba(255,255,255,0.7);}
+.tc-body ul{margin:8px 0 14px 20px;display:flex;flex-direction:column;gap:6px;}
+.tc-body ul li{font-size:14px;line-height:1.75;color:rgba(255,255,255,0.7);}
+.tc-body strong{color:var(--white);font-weight:600;}
+.tc-body .tc-warning{background:rgba(200,169,81,0.08);border:1px solid rgba(200,169,81,0.25);border-radius:10px;padding:14px 18px;margin:16px 0;font-size:13.5px;color:rgba(255,255,255,0.75);line-height:1.7;}
+.tc-body .tc-warning strong{color:var(--gold);}
+.tc-date{font-size:12px;color:rgba(255,255,255,0.3);text-align:right;margin-top:28px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);}
+.tc-footer-link{color:rgba(255,255,255,0.45);text-decoration:none;font-size:13px;transition:color .2s;cursor:pointer;background:none;border:none;font-family:'Outfit',sans-serif;}
+.tc-footer-link:hover{color:var(--green-light);}
+
+
+/* TEAM */
+.team-section{margin-top:56px;}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;}
+.team-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px;text-align:center;transition:all .3s;position:relative;overflow:hidden;}
+.team-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--green-light));transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.team-card:hover{border-color:rgba(58,125,68,0.3);background:rgba(58,125,68,0.06);}
+.team-card:hover::before{transform:scaleX(1);}
+.team-avatar{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,rgba(58,125,68,0.3),rgba(58,125,68,0.1));border:2px solid rgba(58,125,68,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--green-light);}
+.team-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--white);margin-bottom:6px;}
+.team-role{font-size:12px;color:var(--green-light);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;}
+.team-bio{font-size:13.5px;color:rgba(255,255,255,0.45);line-height:1.7;font-style:italic;}
+@media(max-width:600px){.team-grid{grid-template-columns:1fr;}}
+
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:all .7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* RESPONSIVE */
+@media(max-width:900px){.hero-stats{display:none;}.agent-wrap,.mp-wrap,.contact-grid{grid-template-columns:1fr;}.footer-grid{grid-template-columns:1fr 1fr;}.steps::before{display:none;}}
+@media(max-width:600px){.nav-links{display:none;}.hamburger{display:flex;}section{padding:68px 5%;}.footer-grid{grid-template-columns:1fr;}.fin-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#hero" class="nav-logo"><img id="navLogo" src="" alt="Finexo Advisory"></a>
+  <ul class="nav-links">
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#proceso">Cómo funciona</a></li>
+        <li><a href="#sobre">Sobre Nosotros</a></li>
+    <li><a href="#sobre">Nosotros</a></li>
+    
+    <li><a href="#contacto">Contacto</a></li>
+    <li><a href="#" class="nav-cta" onclick="openAgent(event)">Diagnóstico Gratuito</a></li>
+  </ul>
+  <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#servicios" onclick="toggleMenu()">Servicios</a>
+  <a href="#proceso" onclick="toggleMenu()">Cómo funciona</a>
+  <a href="#sobre" onclick="toggleMenu()">Nosotros</a>
+  
+  <a href="#contacto" onclick="toggleMenu()">Contacto</a>
+  <a href="#" onclick="toggleMenu();openAgent(event);" style="color:var(--green-light);font-weight:700;">Diagnóstico Gratuito</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div><div class="hero-grid"></div>
+  <div class="hero-orb"></div><div class="hero-orb2"></div>
+  <div class="hero-content">
+    <div class="hero-tag">🇩🇴 República Dominicana</div>
+    <h1 class="hero-title">Tu situación financiera<br><span>tiene solución.</span></h1>
+    <p class="hero-sub">Estructuración de Crédito y Capital Privado. Asesoría especializada en reestructuración de deudas para personas y empresas en República Dominicana.</p>
+    <div class="hero-actions">
+      <a href="#" class="btn-primary" onclick="openAgent(event)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Iniciar Diagnóstico
+      </a>
+      <a href="#servicios" class="btn-outline">Ver Servicios</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card"><div class="stat-num">+15<span>%</span></div><div class="stat-label">Tasa promedio ahorrada</div></div>
+    <div class="stat-card"><div class="stat-num">48<span>h</span></div><div class="stat-label">Tiempo de respuesta</div></div>
+    <div class="stat-card"><div class="stat-num">100<span>%</span></div><div class="stat-label">Confidencial</div></div>
+  </div>
+  <div class="scroll-hint"><div class="scroll-line"></div><span>Scroll</span></div>
+</section>
+
+<!-- SERVICIOS -->
+<section id="servicios">
+  <div class="reveal">
+    <div class="section-tag">Servicios</div>
+    <h2 class="section-title">Soluciones para cada <span>etapa financiera</span></h2>
+    <p class="section-sub">Desde una consulta puntual hasta un plan completo de reestructuración. Selecciona el servicio que mejor se adapta a tu situación.</p>
+  </div>
+  <div class="services-grid reveal">
+    <div class="svc-card"><div class="svc-icon">🔍</div><div class="svc-title">Consulta Puntual</div><div class="svc-desc">Una sesión de 60–90 minutos para resolver dudas específicas sobre deudas, negociaciones o decisiones de crédito.</div></div>
+    <div class="svc-card"><div class="svc-icon">📊</div><div class="svc-title">Diagnóstico Financiero</div><div class="svc-desc">Análisis completo de tu situación: mapa de deudas, tasas reales pagadas y prioridades de acción. Incluye reporte escrito.</div></div>
+    <div class="svc-card"><div class="svc-icon">🗺️</div><div class="svc-title">Plan de Restructuración</div><div class="svc-desc">Diseño de estrategia para reorganizar, negociar o consolidar deudas. Incluye simulaciones de escenarios y plan paso a paso.</div></div>
+    <div class="svc-card"><div class="svc-icon">🤝</div><div class="svc-title">Acompañamiento en Negociación</div><div class="svc-desc">Preparamos estrategia, argumentos y documentos para negociar quitas, refinanciamientos o acuerdos de pago.</div></div>
+    <div class="svc-card"><div class="svc-icon">🏢</div><div class="svc-title">Asesoría Empresarial</div><div class="svc-desc">Restructuración de capital y deuda para PYMEs. Optimización de estructura financiera y acceso a capital privado.</div></div>
+    <div class="svc-card" style="border-color:rgba(58,125,68,0.3);background:rgba(58,125,68,0.06);"><div class="svc-icon">⭐</div><div class="svc-title">Finexo 360°</div><div class="svc-desc">Diagnóstico + Plan + Acompañamiento completo con seguimiento por 60 días. Para casos de alta complejidad.</div></div>
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section id="proceso">
+  <div class="reveal" style="text-align:center;">
+    <div class="section-tag">Proceso</div>
+    <h2 class="section-title">Simple, <span>transparente</span> y efectivo</h2>
+    <p class="section-sub" style="margin:0 auto;">Cuatro pasos para pasar de la incertidumbre financiera a un plan claro de acción.</p>
+  </div>
+  <div class="steps reveal">
+    <div class="step"><div class="step-num">01</div><div class="step-title">Diagnóstico Inicial</div><div class="step-desc">Nuestro agente recopila tu situación de forma confidencial y genera un perfil financiero preliminar.</div></div>
+    <div class="step"><div class="step-num">02</div><div class="step-title">Análisis Experto</div><div class="step-desc">Un asesor especializado revisa tu caso e identifica las mejores estrategias disponibles.</div></div>
+    <div class="step"><div class="step-num">03</div><div class="step-title">Plan Personalizado</div><div class="step-desc">Recibes un plan de acción concreto con pasos, plazos y proyecciones claras.</div></div>
+    <div class="step"><div class="step-num">04</div><div class="step-title">Acompañamiento</div><div class="step-desc">Te acompañamos en la ejecución del plan hasta lograr los resultados acordados.</div></div>
+  </div>
+</section>
+
+<!-- SOBRE NOSOTROS -->
+<section id="sobre">
+  <div class="sobre-wrap">
+    <div class="reveal">
+      <div class="section-tag">Sobre Nosotros</div>
+      <h2 class="section-title">Nuestra <span>misión</span></h2>
+      <p class="mision-text">"Devolver la <span>claridad financiera</span> a quienes más la necesitan, con honestidad, rigor técnico y un compromiso genuino con sus resultados."</p>
+      <p class="section-sub">Finexo Advisory nació de la convicción de que en República Dominicana existe una brecha entre quienes necesitan orientación financiera especializada y quienes tienen acceso real a ella. Estamos aquí para cerrar esa brecha.</p>
+      <div class="pilares">
+        <div class="pilar"><div class="pilar-num">01</div><div><div class="pilar-title">Independencia</div><div class="pilar-desc">No estamos afiliados a ninguna institución financiera. Nuestro único interés es el tuyo.</div></div></div>
+        <div class="pilar"><div class="pilar-num">02</div><div><div class="pilar-title">Transparencia total</div><div class="pilar-desc">Sin letra chica, sin costos ocultos. Sabrás exactamente qué obtienes antes de comprometerte.</div></div></div>
+        <div class="pilar"><div class="pilar-num">03</div><div><div class="pilar-title">Resultados medibles</div><div class="pilar-desc">No trabajamos con promesas vacías. Cada plan que elaboramos tiene métricas claras de éxito.</div></div></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="sobre-card">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:20px;">Nuestros valores</div>
+        <div class="sobre-values">
+          <div class="val-card"><div class="val-icon">🎯</div><div class="val-title">Rigor técnico</div><div class="val-desc">Análisis financiero con estándares profesionales en cada caso.</div></div>
+          <div class="val-card"><div class="val-icon">🤝</div><div class="val-title">Empatía</div><div class="val-desc">Entendemos que detrás de cada deuda hay una persona, no un número.</div></div>
+          <div class="val-card"><div class="val-icon">🔒</div><div class="val-title">Confidencialidad</div><div class="val-desc">Tu información financiera es sagrada. Nunca la compartimos.</div></div>
+          <div class="val-card"><div class="val-icon">⚡</div><div class="val-title">Agilidad</div><div class="val-desc">Diagnósticos rápidos. Sin burocracia. Sin tiempos de espera innecesarios.</div></div>
+          <div class="val-card"><div class="val-icon">🌱</div><div class="val-title">Compromiso</div><div class="val-desc">No cerramos un caso hasta que el cliente tiene un camino claro.</div></div>
+          <div class="val-card"><div class="val-icon">🇩🇴</div><div class="val-title">Local</div><div class="val-desc">Conocemos el mercado dominicano por dentro. No aplicamos recetas importadas.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="team-section reveal">
+    <div class="section-tag">El Equipo</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">JG</div>
+        <div class="team-name">Javier González</div>
+        <div class="team-role">Fundador & Asesor Principal</div>
+        <div class="team-bio">Información del perfil próximamente.</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">LC</div>
+        <div class="team-name">Laura Canela</div>
+        <div class="team-role">Co-Fundadora & Socia</div>
+        <div class="team-bio">Información del perfil próximamente.</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <div class="reveal">
+    <div class="section-tag">Contacto</div>
+    <h2 class="section-title">Hablemos de tu <span>situación</span></h2>
+    <p class="section-sub">Primera consulta sin costo. Sin compromisos, sin presiones.</p>
+  </div>
+  <div class="contact-grid reveal">
+    <div class="contact-info">
+      <a href="https://wa.me/18095550000" target="_blank" class="cinfo-item">
+        <div class="cinfo-icon">📱</div>
+        <div><div class="cinfo-label">WhatsApp</div><div class="cinfo-val">+1 (809) 555-0000</div></div>
+      </a>
+      <a href="mailto:info@finexo.do" class="cinfo-item">
+        <div class="cinfo-icon">✉️</div>
+        <div><div class="cinfo-label">Email</div><div class="cinfo-val">info@finexo.do</div></div>
+      </a>
+      <a href="#" class="cinfo-item" onclick="openAgent(event)">
+        <div class="cinfo-icon">🤖</div>
+        <div><div class="cinfo-label">Diagnóstico IA</div><div class="cinfo-val">Disponible 24/7 — Gratis</div></div>
+      </a>
+
+    </div>
+    <div class="contact-form">
+      <div class="form-title">Agenda tu cita</div>
+      <div id="formSuccess" class="form-success">✅ ¡Solicitud recibida!<br>Te contactaremos en menos de 24 horas.</div>
+      <div id="theForm">
+        <div class="form-group"><label>Nombre completo</label><input type="text" id="fName" placeholder="Juan García"></div>
+        <div class="form-group"><label>Teléfono / WhatsApp</label><input type="text" id="fPhone" placeholder="+1 809 000 0000"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="fEmail" placeholder="correo@ejemplo.com"></div>
+        <div class="form-group"><label>Servicio de interés</label>
+          <select id="fService">
+            <option value="">Selecciona un servicio</option>
+            <option>Consulta Puntual</option><option>Diagnóstico Financiero</option>
+            <option>Plan de Restructuración</option><option>Acompañamiento en Negociación</option>
+            <option>Asesoría Empresarial</option><option>Finexo 360°</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Mensaje (opcional)</label><textarea id="fMsg" placeholder="Cuéntanos brevemente tu situación..."></textarea></div>
+        <button class="form-submit" onclick="submitForm()">
+          <span>Enviar solicitud</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <img id="footerLogo" src="" alt="Finexo Advisory">
+      <p>Estructuración de Crédito y Capital Privado. Asesoría financiera especializada para personas y empresas en República Dominicana.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Servicios</h4>
+      <ul>
+        <li><a href="#servicios">Consulta Puntual</a></li>
+        <li><a href="#servicios">Diagnóstico Financiero</a></li>
+        <li><a href="#servicios">Restructuración de Deudas</a></li>
+        <li><a href="#servicios">Asesoría Empresarial</a></li>
+        
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <ul>
+        <li><a href="#proceso">Cómo funciona</a></li>
+        <li><a href="#sobre">Sobre Nosotros</a></li>
+    <li><a href="#sobre">Nosotros</a></li>
+        
+        <li><a href="#contacto">Contacto</a></li>
+        <li><a href="mailto:info@finexo.do">info@finexo.do</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 Finexo Advisory · República Dominicana · Todos los derechos reservados · <button class="tc-footer-link" onclick="openTC()">Términos y Condiciones</button></span>
+    
+  </div>
+</footer>
+
+<!-- WHATSAPP -->
+<a href="https://wa.me/18095550000" target="_blank" class="wa-float">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<!-- AGENT MODAL -->
+<div class="modal-overlay" id="agentModal">
+  <div class="modal-box" id="diagBox">
+    <div class="modal-header">
+      <div><div class="modal-title">Diagnóstico Financiero</div><div class="modal-sub">Finexo Advisory · Confidencial</div></div>
+      <button class="modal-close" onclick="closeAgent()">✕</button>
+    </div>
+    <!-- PROGRESS BAR -->
+    <div class="diag-progress-wrap">
+      <div class="diag-progress-bar"><div class="diag-progress-fill" id="diagProgress"></div></div>
+      <div class="diag-progress-label" id="diagProgressLabel">Paso 1 de 6</div>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div id="diagForm"></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<!-- ADVISOR PANEL -->
+<div class="adv-panel" id="advPanel">
+  <div class="adv-topbar">
+    <div><div class="adv-topbar-title">Informe del Asesor</div><div class="adv-topbar-sub">Finexo Advisory · Uso Interno Exclusivo</div></div>
+    <div class="adv-actions">
+      <button class="adv-btn" onclick="closeAdvisor()">← Volver</button>
+      <button class="adv-btn primary" onclick="window.print()">Imprimir</button>
+    </div>
+  </div>
+  <div class="adv-content"><div id="reportOutput"></div></div>
+</div>
+
+<script>
+
+
+// Load logo from external file
+const FULL_SRC = "logo.png";
+document.getElementById('navLogo').src = FULL_SRC;
+document.getElementById('footerLogo').src = FULL_SRC;
+
+
+// Nav scroll
+window.addEventListener('scroll', function() {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// Mobile menu
+function toggleMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+// Scroll reveal
+var revealObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(function(el) { revealObs.observe(el); });
+
+// Contact form
+function submitForm(){
+  var name = document.getElementById('fName').value.trim();
+  var phone = document.getElementById('fPhone').value.trim();
+  var email = document.getElementById('fEmail').value.trim();
+  var service = document.getElementById('fService').value;
+  var msg = document.getElementById('fMsg').value.trim();
+
+  if(!name){ alert('Por favor ingresa tu nombre'); return; }
+  if(!phone && !email){ alert('Por favor ingresa tu telefono o email'); return; }
+
+  var btn = document.querySelector('.form-submit');
+  btn.innerHTML = '<span>Enviando...</span>';
+  btn.disabled = true;
+
+  fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    body: JSON.stringify({
+      access_key: 'f5915135-ea41-4c92-9b27-4b6a515b22b5',
+      subject: 'Nueva solicitud de cita - Finexo Advisory',
+      from_name: 'Finexo Advisory Web',
+      nombre: name,
+      telefono: phone || 'No indicado',
+      email_cliente: email || 'No indicado',
+      servicio: service || 'No especificado',
+      mensaje: msg || 'Sin mensaje'
+    })
+  }).then(function(r){ return r.json(); })
+  .then(function(d){
+    if(d.success){
+      document.getElementById('theForm').style.display='none';
+      document.getElementById('formSuccess').style.display='block';
+    } else {
+      throw new Error(d.message);
+    }
+  }).catch(function(err){
+    console.error('Error:', err);
+    btn.innerHTML = '<span>Enviar solicitud</span>';
+    btn.disabled = false;
+    alert('Hubo un problema. Por favor escríbenos por WhatsApp.');
+  });
+}
+
+function closeAgent() { document.getElementById('agentModal').classList.remove('open'); document.body.style.overflow=''; }
+function closeAdvisor() { document.getElementById('advPanel').classList.remove('open'); document.body.style.overflow=''; }
+
+
+// ── FINEXO DIAGNOSTIC FORM ──
+var WEB3_KEY = 'f5915135-ea41-4c92-9b27-4b6a515b22b5';
+var CF_WORKER = 'https://square-frog-0e47.finexo-gf.workers.dev';
+
+var diagData = {
+  nombre:'', situacion:[], deudas:[], ingresos:[],
+  gastos_fijos:[], gastos_variables:[],
+  objetivo:'', contacto_nombre:'', contacto_tel:'', contacto_email:''
+};
+
+var selEstado='', selGarantia='', tipoIngr='', frecIngr='';
+
+// ── STEP NAVIGATION ──
+function openAgent(e){ if(e) e.preventDefault(); document.getElementById('agentModal').classList.add('open'); document.body.style.overflow='hidden'; if(!diagData.nombre) renderStep(0); }
+function closeAgent(){ document.getElementById('agentModal').classList.remove('open'); document.body.style.overflow=''; }
+function closeAdvisor(){ document.getElementById('advPanel').classList.remove('open'); document.body.style.overflow=''; }
+function openAdvisor(){ document.getElementById('agentModal').classList.remove('open'); document.getElementById('advPanel').classList.add('open'); document.body.style.overflow='hidden'; window.scrollTo({top:0}); }
+function openTC(){ document.getElementById('tcModal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeTC(){ document.getElementById('tcModal').classList.remove('open'); document.body.style.overflow=''; }
+
+function setProgress(step){
+  var pct = Math.min(Math.round((step/7)*100),100);
+  document.getElementById('diagProgress').style.width = pct+'%';
+  document.getElementById('diagProgressLabel').textContent = step<7 ? 'Paso '+(step+1)+' de 7' : 'Completado';
+}
+
+function renderStep(s){ setProgress(s); var c=document.getElementById('diagForm'); [renderNombre,renderSituacion,renderDeudas,renderIngresos,renderGastos,renderObjetivo,renderContacto,renderResumen][s](c); }
+
+function step(q,hint,body,back,fn,lbl){
+  return '<div class="diag-step"><div class="diag-question">'+q+'</div><div class="diag-hint">'+hint+'</div>'+body+'<div class="diag-nav">'+(back>=0?'<button class="diag-back" onclick="renderStep('+back+')">← Atrás</button>':'<div></div>')+'<button class="diag-next" onclick="'+fn+'">'+(lbl||'Continuar →')+'</button></div></div>';
+}
+
+// STEP 0 - Nombre
+function renderNombre(c){
+  c.innerHTML = step('¿Cuál es tu nombre?','Así personalizamos tu diagnóstico.',
+    '<input class="diag-input" id="iNom" placeholder="Ej: Juan García" value="'+diagData.nombre+'" oninput="diagData.nombre=this.value" onkeydown="if(event.key==='Enter')nextN()">',
+    -1,'nextN()');
+  setTimeout(function(){ var el=document.getElementById('iNom'); if(el) el.focus(); },80);
+}
+function nextN(){ if(!diagData.nombre.trim()){alert('Por favor ingresa tu nombre');return;} renderStep(1); }
+
+// STEP 1 - Situacion
+function renderSituacion(c){
+  var opts=['Tengo deudas difíciles de pagar','Mis cuotas son muy altas','Estoy en mora con acreedores','Quiero consolidar mis deudas','Necesito mejorar mi historial crediticio','Busco financiamiento nuevo','Mi empresa tiene problemas financieros','Quiero estructurar capital privado'];
+  var btns=''; for(var i=0;i<opts.length;i++){ var o=opts[i]; btns+='<button class="diag-opt'+(diagData.situacion.indexOf(o)!==-1?' selected':'')+'" onclick="toggleSit(this,''+o.replace(/'/g,"\'")+'')" >'+o+'</button>'; }
+  c.innerHTML = step(diagData.nombre+', ¿cuál es tu situación?','Puedes seleccionar más de una.',
+    '<div class="diag-options">'+btns+'</div>',0,'nextSit()');
+}
+function toggleSit(el,v){ var i=diagData.situacion.indexOf(v); if(i===-1){diagData.situacion.push(v);el.classList.add('selected');}else{diagData.situacion.splice(i,1);el.classList.remove('selected');} }
+function nextSit(){ if(!diagData.situacion.length){alert('Selecciona al menos una opción');return;} renderStep(2); }
+
+// STEP 2 - Deudas
+function renderDeudas(c){
+  var list=''; for(var i=0;i<diagData.deudas.length;i++){var d=diagData.deudas[i]; list+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+d.acreedor+'</strong> — RD$'+Number(d.monto).toLocaleString()+'<span>Cuota: RD$'+Number(d.cuota_mensual||0).toLocaleString()+' · '+d.estado+'</span></div><button class="diag-debt-remove" onclick="removeDebt('+i+')">✕</button></div>';}
+  c.innerHTML = step('¿Cuáles son tus deudas?','Agrega cada deuda. Puedes continuar sin agregar.',
+    list+
+    '<div class="diag-label">Acreedor</div><input class="diag-input" id="dA" placeholder="Ej: Banco Popular, BHD León...">'+
+    '<div class="diag-input-row"><div><div class="diag-label">Monto total (RD$)</div><input class="diag-input" id="dM" type="number" placeholder="150000"></div><div><div class="diag-label">Cuota mensual (RD$)</div><input class="diag-input" id="dC" type="number" placeholder="8500"></div></div>'+
+    '<div class="diag-input-row"><div><div class="diag-label">Tasa de interés</div><input class="diag-input" id="dT" placeholder="Ej: 28% anual"></div><div><div class="diag-label">Tiempo restante</div><input class="diag-input" id="dTi" placeholder="Ej: 24 meses"></div></div>'+
+    '<div class="diag-label" style="margin-bottom:8px">Estado</div>'+
+    '<div class="diag-options"><button class="diag-opt'+(selEstado==='al día'?' selected':'')+'" id="bAlDia" onclick="setEst('al día')">✅ Al día</button><button class="diag-opt'+(selEstado==='en mora'?' selected':'')+'" id="bMora" onclick="setEst('en mora')">⚠️ En mora</button></div>'+
+    '<button class="diag-add-btn" onclick="addDebt()">+ Agregar esta deuda</button>',
+    1,'renderStep(3)',diagData.deudas.length?'Continuar →':'Omitir →');
+}
+function setEst(v){ selEstado=v; var a=document.getElementById('bAlDia'),b=document.getElementById('bMora'); if(a&&b){a.classList.remove('selected');b.classList.remove('selected');if(v==='al día')a.classList.add('selected');else b.classList.add('selected');} }
+function addDebt(){
+  var a=(document.getElementById('dA')||{}).value||''; var m=(document.getElementById('dM')||{}).value||''; var cu=(document.getElementById('dC')||{}).value||'0';
+  var t=(document.getElementById('dT')||{}).value||'N/D'; var ti=(document.getElementById('dTi')||{}).value||'N/D';
+  if(!a||!m){alert('Ingresa el acreedor y el monto');return;} if(!selEstado){alert('Indica si está al día o en mora');return;}
+  diagData.deudas.push({acreedor:a,monto:m,cuota_mensual:cu,tasa:t,tiempo_restante:ti,estado:selEstado});
+  selEstado=''; renderDeudas(document.getElementById('diagForm'));
+}
+function removeDebt(i){ diagData.deudas.splice(i,1); renderDeudas(document.getElementById('diagForm')); }
+
+// STEP 3 - Ingresos
+function renderIngresos(c){
+  var list=''; for(var i=0;i<diagData.ingresos.length;i++){var ing=diagData.ingresos[i]; list+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+ing.tipo+'</strong> — RD$'+Number(ing.monto).toLocaleString()+' '+ing.frecuencia+'<span>aprox. RD$'+Number(ing.mensualizado).toLocaleString()+'/mes</span></div><button class="diag-debt-remove" onclick="removeIngreso('+i+')">✕</button></div>';}
+  var tipoOpts=['Salario','Negocio propio','Renta / alquiler','Remesas','Freelance','Otro'];
+  var tBtns='<div class="diag-options" id="tipoIngrOpts">'; for(var j=0;j<tipoOpts.length;j++){tBtns+='<button class="diag-opt'+(tipoIngr===tipoOpts[j]?' selected':'')+'" onclick="selTipoIngr(''+tipoOpts[j]+'',this)">'+tipoOpts[j]+'</button>';} tBtns+='</div>';
+  var total=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
+  c.innerHTML = step('¿Cuáles son tus fuentes de ingreso?','Agrega cada fuente. Puedes continuar sin agregar.',
+    list+tBtns+
+    '<div class="diag-input-row"><div><div class="diag-label">Monto (RD$)</div><input class="diag-input" id="iMonto" type="number" placeholder="40000" oninput="calcMens()"></div>'+
+    '<div><div class="diag-label" style="margin-bottom:6px">Frecuencia</div><div style="display:flex;gap:6px"><button class="diag-opt frec-opt'+(frecIngr==='Semanal'?' selected':'')+'" onclick="selFrecIngr('Semanal',this)">Semanal</button><button class="diag-opt frec-opt'+(frecIngr==='Quincenal'?' selected':'')+'" onclick="selFrecIngr('Quincenal',this)">Quincenal</button><button class="diag-opt frec-opt'+(frecIngr==='Mensual'?' selected':'')+'" onclick="selFrecIngr('Mensual',this)">Mensual</button></div></div></div>'+
+    '<div id="mensualizado" style="font-size:12px;color:rgba(255,255,255,.4);margin:4px 0 12px"></div>'+
+    '<button class="diag-add-btn" onclick="addIngreso()">+ Agregar esta fuente</button>'+
+    (total?'<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white)">Total mensual: <strong>RD$'+total.toLocaleString()+'</strong></div>':''),
+    2,'nextIngresos()',diagData.ingresos.length?'Continuar →':'Omitir →');
+}
+function selTipoIngr(v,el){ tipoIngr=v; document.querySelectorAll('#tipoIngrOpts .diag-opt').forEach(function(b){b.classList.remove('selected');}); el.classList.add('selected'); }
+function selFrecIngr(v,el){ frecIngr=v; document.querySelectorAll('.frec-opt').forEach(function(b){b.classList.remove('selected');}); el.classList.add('selected'); calcMens(); }
+function calcMens(){ var m=Number((document.getElementById('iMonto')||{}).value)||0; var f=frecIngr==='Semanal'?4.33:frecIngr==='Quincenal'?2:1; var el=document.getElementById('mensualizado'); if(el&&m&&frecIngr) el.textContent='≈ RD$'+Math.round(m*f).toLocaleString()+' mensuales'; }
+function addIngreso(){
+  var m=(document.getElementById('iMonto')||{}).value||'';
+  if(!tipoIngr){alert('Selecciona el tipo de ingreso');return;} if(!m){alert('Ingresa el monto');return;} if(!frecIngr){alert('Selecciona la frecuencia');return;}
+  var factor=frecIngr==='Semanal'?4.33:frecIngr==='Quincenal'?2:1;
+  diagData.ingresos.push({tipo:tipoIngr,monto:m,frecuencia:frecIngr,mensualizado:Math.round(Number(m)*factor)});
+  tipoIngr=''; frecIngr=''; renderIngresos(document.getElementById('diagForm'));
+}
+function removeIngreso(i){ diagData.ingresos.splice(i,1); renderIngresos(document.getElementById('diagForm')); }
+function nextIngresos(){ renderStep(4); }
+
+// STEP 4 - Gastos
+function renderGastos(c){
+  var catF=['Vivienda (alquiler/hipoteca)','Vehículo (cuota/seguro)','Educación','Seguro médico','Servicios (luz, agua, internet)','Otro fijo'];
+  var catV=['Alimentación','Transporte / gasolina','Entretenimiento','Ropa y calzado','Salud / medicamentos','Otro variable'];
+  var gfList=''; for(var i=0;i<diagData.gastos_fijos.length;i++){var g=diagData.gastos_fijos[i]; gfList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+g.categoria+' — RD$'+Number(g.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto('fijo','+i+')">✕</button></div>';}
+  var gvList=''; for(var j=0;j<diagData.gastos_variables.length;j++){var gv=diagData.gastos_variables[j]; gvList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+gv.categoria+' — RD$'+Number(gv.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto('variable','+j+')">✕</button></div>';}
+  var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
+  var totalV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
+  var optF='<option value="">Categoría...</option>'; for(var k=0;k<catF.length;k++) optF+='<option>'+catF[k]+'</option>';
+  var optV='<option value="">Categoría...</option>'; for(var l=0;l<catV.length;l++) optV+='<option>'+catV[l]+'</option>';
+  c.innerHTML = step('Tus gastos mensuales','Separar fijos de variables nos ayuda a identificar dónde hay espacio.',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
+    '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">'+
+    '<div class="diag-label" style="color:var(--green-light);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Fijos</div>'+
+    gfList+'<select class="diag-input" id="gfCat" style="margin-bottom:8px;font-size:13px">'+optF+'</select>'+
+    '<input class="diag-input" id="gfMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">'+
+    '<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto('fijo')">+ Agregar</button>'+
+    (totalF?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalF.toLocaleString()+'</div>':'')+
+    '</div>'+
+    '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">'+
+    '<div class="diag-label" style="color:var(--gold);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Variables</div>'+
+    gvList+'<select class="diag-input" id="gvCat" style="margin-bottom:8px;font-size:13px">'+optV+'</select>'+
+    '<input class="diag-input" id="gvMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">'+
+    '<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto('variable')">+ Agregar</button>'+
+    (totalV?'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalV.toLocaleString()+'</div>':'')+
+    '</div></div>'+
+    ((totalF+totalV)?'<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white);margin-top:12px">Total gastos: <strong>RD$'+(totalF+totalV).toLocaleString()+'</strong></div>':''),
+    3,'nextGastos()',(diagData.gastos_fijos.length||diagData.gastos_variables.length)?'Continuar →':'Omitir →');
+}
+function addGasto(tipo){
+  var cat=document.getElementById(tipo==='fijo'?'gfCat':'gvCat').value;
+  var monto=document.getElementById(tipo==='fijo'?'gfMonto':'gvMonto').value;
+  if(!cat){alert('Selecciona una categoría');return;} if(!monto){alert('Ingresa el monto');return;}
+  if(tipo==='fijo') diagData.gastos_fijos.push({categoria:cat,monto:monto});
+  else diagData.gastos_variables.push({categoria:cat,monto:monto});
+  renderGastos(document.getElementById('diagForm'));
+}
+function removeGasto(tipo,i){ if(tipo==='fijo') diagData.gastos_fijos.splice(i,1); else diagData.gastos_variables.splice(i,1); renderGastos(document.getElementById('diagForm')); }
+function nextGastos(){ renderStep(5); }
+
+// STEP 5 - Objetivo
+function renderObjetivo(c){
+  var opts=['Reducir mis cuotas mensuales','Salir de deudas completamente','Negociar con mis acreedores','Mejorar mi historial crediticio','Conseguir nuevo financiamiento','Reorganizar las finanzas de mi empresa'];
+  var btns=''; for(var i=0;i<opts.length;i++){var o=opts[i]; btns+='<button class="diag-opt'+(diagData.objetivo===o?' selected':'')+'" onclick="diagData.objetivo=''+o.replace(/'/g,"\'")+'';document.querySelectorAll('#diagForm .diag-opt').forEach(function(b){b.classList.remove('selected');});this.classList.add('selected');">'+o+'</button>';}
+  c.innerHTML = step('¿Cuál es tu objetivo principal?','Selecciona el resultado más importante para ti.',
+    '<div class="diag-options">'+btns+'</div>',4,'nextObj()');
+}
+function nextObj(){ if(!diagData.objetivo){alert('Selecciona tu objetivo');return;} renderStep(6); }
+
+// STEP 6 - Contacto
+function renderContacto(c){
+  c.innerHTML = step('Para enviarte tu plan personalizado','Un asesor te contactará en menos de 24 horas.',
+    '<div class="diag-label">Nombre completo</div><input class="diag-input" id="cN" placeholder="Juan García" value="'+diagData.contacto_nombre+'">'+
+    '<div class="diag-label" style="margin-top:10px">WhatsApp / Teléfono</div><input class="diag-input" id="cT" placeholder="+1 809 000 0000" value="'+diagData.contacto_tel+'">'+
+    '<div class="diag-label" style="margin-top:10px">Email (opcional)</div><input class="diag-input" id="cE" placeholder="correo@ejemplo.com" value="'+diagData.contacto_email+'">',
+    5,'nextContacto()','Ver resumen →');
+}
+function nextContacto(){
+  var n=(document.getElementById('cN')||{}).value||''; var t=(document.getElementById('cT')||{}).value||'';
+  if(!n||!t){alert('Por favor ingresa nombre y teléfono');return;}
+  diagData.contacto_nombre=n; diagData.contacto_tel=t; diagData.contacto_email=(document.getElementById('cE')||{}).value||'';
+  renderStep(7);
+}
+
+// STEP 7 - Resumen
+function renderResumen(c){
+  setProgress(7);
+  var totalC=diagData.deudas.reduce(function(s,d){return s+Number(d.cuota_mensual||0);},0);
+  var totalI=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
+  var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
+  var totalV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
+  var flujo=totalI-totalF-totalV-totalC;
+  var ratio=totalI?Math.round((totalC/totalI)*100):0;
+  var rows='';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Nombre</div><div class="diag-sum-val">'+diagData.contacto_nombre+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Teléfono</div><div class="diag-sum-val">'+diagData.contacto_tel+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Situación</div><div class="diag-sum-val">'+diagData.situacion.join(', ')+'</div></div>';
+  if(diagData.deudas.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Deudas</div><div class="diag-sum-val">'+diagData.deudas.map(function(d){return d.acreedor+' RD$'+Number(d.monto).toLocaleString()+' Cuota:RD$'+Number(d.cuota_mensual||0).toLocaleString();}).join('<br>')+'</div></div>';
+  if(totalC) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total cuotas/mes</div><div class="diag-sum-val">RD$'+totalC.toLocaleString()+'</div></div>';
+  if(diagData.ingresos.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Ingresos</div><div class="diag-sum-val">'+diagData.ingresos.map(function(i){return i.tipo+' RD$'+Number(i.monto).toLocaleString()+' '+i.frecuencia;}).join('<br>')+'</div></div>';
+  if(totalI) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total mensual</div><div class="diag-sum-val">RD$'+totalI.toLocaleString()+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos fijos</div><div class="diag-sum-val">RD$'+totalF.toLocaleString()+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos variables</div><div class="diag-sum-val">RD$'+totalV.toLocaleString()+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Objetivo</div><div class="diag-sum-val">'+diagData.objetivo+'</div></div>';
+  if(totalI) rows+='<div class="diag-sum-row" style="background:rgba(58,125,68,.06);border-color:rgba(58,125,68,.3)"><div class="diag-sum-label">Flujo libre</div><div class="diag-sum-val" style="color:'+(flujo>=0?'var(--green-light)':'#E74C3C')+';font-weight:700">RD$'+flujo.toLocaleString()+' · Ratio: '+ratio+'%</div></div>';
+  c.innerHTML='<div class="diag-step"><div class="diag-question">Revisa tu información</div><div class="diag-hint">Confirma que todo esté correcto antes de enviar.</div><div class="diag-summary">'+rows+'</div><div class="diag-nav"><button class="diag-back" onclick="renderStep(6)">← Editar</button><button class="diag-next" onclick="submitDiag()">Enviar diagnóstico ✓</button></div></div>';
+}
+
+// ── SUBMIT - SIMPLE AND UNBREAKABLE ──
+function submitDiag(){
+  var btn=document.querySelector('#diagForm .diag-next');
+  if(btn){btn.textContent='Enviando...';btn.disabled=true;}
+
+  // Build data object
+  var totalC=diagData.deudas.reduce(function(s,d){return s+Number(d.cuota_mensual||0);},0);
+  var totalI=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
+  var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
+  var totalV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
+
+  var deudasTxt=diagData.deudas.length?diagData.deudas.map(function(d){return d.acreedor+' | RD$'+Number(d.monto).toLocaleString()+' | Cuota RD$'+Number(d.cuota_mensual||0).toLocaleString()+' | '+d.estado+' | '+d.tasa;}).join(' // '):'Ninguna';
+  var ingresosTxt=diagData.ingresos.length?diagData.ingresos.map(function(i){return i.tipo+' RD$'+Number(i.monto).toLocaleString()+' '+i.frecuencia+' (RD$'+Number(i.mensualizado).toLocaleString()+'/mes)';}).join(' // '):'Ninguno';
+  var gfTxt=diagData.gastos_fijos.length?diagData.gastos_fijos.map(function(g){return g.categoria+' RD$'+Number(g.monto).toLocaleString();}).join(' // '):'Ninguno';
+  var gvTxt=diagData.gastos_variables.length?diagData.gastos_variables.map(function(g){return g.categoria+' RD$'+Number(g.monto).toLocaleString();}).join(' // '):'Ninguno';
+
+  // STEP 1: Send raw data to Web3Forms immediately (always works)
+  var payload={
+    access_key: WEB3_KEY,
+    subject: 'FINEXO - Nuevo Lead: '+diagData.contacto_nombre,
+    from_name: 'Finexo Advisory Web',
+    NOMBRE: diagData.contacto_nombre,
+    TELEFONO: diagData.contacto_tel,
+    EMAIL: diagData.contacto_email||'N/D',
+    SITUACION: diagData.situacion.join(', '),
+    DEUDAS: deudasTxt,
+    TOTAL_CUOTAS_MES: 'RD$'+totalC.toLocaleString(),
+    INGRESOS: ingresosTxt,
+    TOTAL_INGRESOS_MES: 'RD$'+totalI.toLocaleString(),
+    GASTOS_FIJOS: gfTxt,
+    GASTOS_VARIABLES: gvTxt,
+    TOTAL_GASTOS: 'RD$'+(totalF+totalV).toLocaleString(),
+    FLUJO_LIBRE: 'RD$'+(totalI-totalF-totalV-totalC).toLocaleString(),
+    OBJETIVO: diagData.objetivo
+  };
+
+  fetch('https://api.web3forms.com/submit',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify(payload)
+  }).then(function(r){return r.json();})
+  .then(function(d){
+    console.log('Web3Forms:', d.success?'OK':'Error', d.message);
+  }).catch(function(e){
+    console.error('Web3Forms error:', e);
+  });
+
+  // STEP 2: Call AI in parallel (best effort - show done regardless)
+  var aiPrompt='Cliente: '+diagData.contacto_nombre+' Tel:'+diagData.contacto_tel+
+    ' Situacion:'+diagData.situacion.join(',')+
+    ' Deudas:'+deudasTxt+
+    ' TotalCuotas:RD$'+totalC+
+    ' Ingresos:'+ingresosTxt+
+    ' TotalIngresos:RD$'+totalI+
+    ' GastosFijos:'+gfTxt+
+    ' GastosVariables:'+gvTxt+
+    ' FlujoLibre:RD$'+(totalI-totalF-totalV-totalC)+
+    ' Objetivo:'+diagData.objetivo;
+
+  var aiSys='Eres analista financiero de Finexo Advisory RD. Analiza este caso y da: 1)Resumen ejecutivo 2)Nivel de estres ALTO/MEDIO/BAJO y razon 3)Ratio de endeudamiento 4)Flujo libre real 5)Servicio recomendado de Finexo Advisory con precio estimado en RD$ 6)Estrategia de restructuracion paso a paso 7)Notas importantes para el asesor. Sé directo y especifico con los numeros.';
+
+  fetch(CF_WORKER,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({system:aiSys, messages:[{role:'user',content:aiPrompt}]})
+  }).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(d){
+    var analysis=d.content&&d.content[0]?d.content[0].text:'';
+    if(analysis){
+      // Send AI analysis as second email
+      fetch('https://api.web3forms.com/submit',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({
+          access_key: WEB3_KEY,
+          subject: 'FINEXO - Análisis IA: '+diagData.contacto_nombre,
+          from_name: 'Finexo Advisory IA',
+          CLIENTE: diagData.contacto_nombre,
+          TELEFONO: diagData.contacto_tel,
+          ANALISIS_IA: analysis
+        })
+      }).catch(function(e){console.error('Web3Forms AI error:',e);});
+    }
+  }).catch(function(e){
+    console.log('AI analysis skipped:', e.message);
+  });
+
+  // Always show success to client after 1 second
+  setTimeout(function(){
+    showDiagDone();
+  }, 1000);
+}
+
+function showDiagDone(){
+  setProgress(8);
+  var ref='FIN-'+Date.now().toString(36).toUpperCase();
+  document.getElementById('diagForm').innerHTML='<div class="diag-done-wrap"><div class="diag-done-icon">✅</div><div class="diag-done-title">¡Listo! Información recibida.</div><div class="diag-done-text">Un asesor de <strong>Finexo Advisory</strong> revisará tu caso y se comunicará contigo en las próximas <strong>24 horas</strong> con un plan personalizado.</div><div class="diag-ref">Ref: '+ref+'</div></div>';
+}
+
+// ── REPORT RENDERER (for internal use) ──
+function renderReport(r){
+  if(!r||!document.getElementById('reportOutput')) return;
+  var out='<div class="rpt-card"><div class="rpt-hdr"><div><div class="rpt-logo">Finexo<span> Advisory</span></div><div style="font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:2px;margin-top:2px">Análisis IA — Uso Interno</div></div><div class="rpt-meta">'+new Date().toLocaleDateString('es-DO',{day:'2-digit',month:'long',year:'numeric'})+'</div></div>';
+  out+='<div class="rpt-body"><div class="rpt-sec"><div class="rpt-sec-title">Cliente</div><div class="rpt-text" style="font-size:17px;font-weight:700;color:#0D1F3C">'+(r.nombre_cliente||diagData.contacto_nombre||'N/D')+'</div></div>';
+  if(r.resumen_ejecutivo) out+='<div class="rpt-sec"><div class="rpt-sec-title">Resumen</div><div class="rpt-text">'+r.resumen_ejecutivo+'</div></div>';
+  if(r.notas_asesor) out+='<div class="rpt-sec"><div class="rpt-sec-title">Notas del Asesor</div><div class="notes-box">'+r.notas_asesor+'</div></div>';
+  if(r.servicio_recomendado) out+='<div class="rpt-sec"><div class="rpt-sec-title">Servicio Recomendado</div><div class="rec-box"><div class="rec-name">'+r.servicio_recomendado+'</div><div class="rec-price">'+( r.precio_estimado||'')+'</div></div></div>';
+  out+='</div><div class="rpt-ftr">Confidencial · Finexo Advisory</div></div>';
+  document.getElementById('reportOutput').innerHTML=out;
+}
+</script>
+
+</body>
+</html>
