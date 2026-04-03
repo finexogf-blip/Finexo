@@ -587,7 +587,6 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
 <script>
 
 
-// Load logo from external file
 const FULL_SRC = "logo.png";
 document.getElementById('navLogo').src = FULL_SRC;
 document.getElementById('footerLogo').src = FULL_SRC;
@@ -962,6 +961,48 @@ function renderReport(r){
   document.getElementById('reportOutput').innerHTML=out;
 }
 </script>
+
+
+<!-- TERMS & CONDITIONS MODAL -->
+<div class="tc-overlay" id="tcModal">
+  <div class="tc-box">
+    <div class="tc-header">
+      <div>
+        <div class="tc-header-title">Términos y Condiciones</div>
+        <div class="tc-header-sub">Finexo Advisory · República Dominicana</div>
+      </div>
+      <button class="tc-close" onclick="closeTC()">✕</button>
+    </div>
+    <div class="tc-body">
+      <div class="tc-warning"><strong>Aviso importante:</strong> El uso de los servicios de Finexo Advisory implica la aceptación plena de los presentes Términos y Condiciones.</div>
+      <h2>1. Identificación y Naturaleza del Servicio</h2>
+      <p>Finexo Advisory es una firma de consultoría financiera independiente domiciliada en la República Dominicana. <strong>No es una entidad financiera, banco, cooperativa, ni entidad regulada por la Junta Monetaria o la Superintendencia de Bancos.</strong> Los servicios son de naturaleza estrictamente consultiva.</p>
+      <h2>2. Alcance de los Servicios</h2>
+      <p>Los servicios comprenden diagnóstico financiero, planes de reestructuración, asesoría estratégica y consultoría en estructuración de capital privado. <strong>Finexo Advisory no actúa como representante legal del cliente ni garantiza resultados específicos.</strong></p>
+      <h2>3. Limitación de Responsabilidad</h2>
+      <p>Finexo Advisory no asume responsabilidad por decisiones del cliente, resultados de negociaciones con terceros, ni por inexactitudes en información suministrada. La responsabilidad total no excederá el monto pagado por el servicio.</p>
+      <h2>4. Obligaciones del Cliente</h2>
+      <p>El cliente se compromete a suministrar información veraz y completa, no utilizar los servicios para fines ilícitos, y cumplir con los compromisos de pago acordados.</p>
+      <h2>5. Confidencialidad y Protección de Datos</h2>
+      <p>Toda información del cliente es tratada con absoluta confidencialidad y no será divulgada a terceros sin consentimiento expreso, salvo requerimiento de autoridad judicial competente.</p>
+      <h2>6. Honorarios y Política de Pagos</h2>
+      <p>Los honorarios son los acordados antes del inicio de cada servicio. Una vez iniciado, no proceden reembolsos totales. En desistimiento previo aplica cargo administrativo del 20%.</p>
+      <h2>7. Propiedad Intelectual</h2>
+      <p>Todos los informes, metodologías y herramientas son propiedad exclusiva de Finexo Advisory y están protegidos por las leyes dominicanas de propiedad intelectual.</p>
+      <h2>8. Uso del Agente de Inteligencia Artificial</h2>
+      <p>El agente de IA tiene carácter orientativo y no constituye asesoría financiera definitiva. Todo diagnóstico es revisado por un asesor humano calificado.</p>
+      <h2>9. Independencia Profesional</h2>
+      <p>Finexo Advisory opera con total independencia y no percibe comisiones de terceros por sus recomendaciones.</p>
+      <h2>10. Modificaciones</h2>
+      <p>Finexo Advisory se reserva el derecho de modificar estos Términos. El uso continuado implica aceptación de los cambios.</p>
+      <h2>11. Legislación Aplicable y Jurisdicción</h2>
+      <p>Estos Términos se rigen por las leyes de la República Dominicana. Las partes se someten a los tribunales del Distrito Nacional.</p>
+      <h2>12. Contacto</h2>
+      <p>Para consultas, comuníquese a través de los canales oficiales disponibles en este sitio web.</p>
+      <div class="tc-date">Última actualización: Marzo 2025 · Finexo Advisory · República Dominicana</div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
