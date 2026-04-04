@@ -1026,12 +1026,27 @@ var _user = null;
 
 document.addEventListener('DOMContentLoaded', function() {
   _supa = supabase.createClient('https://nlmbuhuuqpcsnvfryrkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sbWJ1aHV1cXBjc252ZnJ5cmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjUxNTMsImV4cCI6MjA5MDkwMTE1M30.9CnHr0Qj4spC2ZyUirhLVKp-EN6g1k5GKI0ny89k8Oc');
+
+  // Handle email confirmation redirect with access_token in URL hash
+  if(window.location.hash && window.location.hash.includes('access_token')) {
+    _supa.auth.getSession().then(function(r) {
+      if(r.data && r.data.session) {
+        _onLogin(r.data.session.user);
+        // Clean URL
+        history.replaceState(null, '', window.location.pathname);
+      }
+    });
+  }
+
   _supa.auth.getSession().then(function(r) {
     if(r.data && r.data.session) _onLogin(r.data.session.user);
   });
   _supa.auth.onAuthStateChange(function(ev, session) {
-    if(session) _onLogin(session.user);
-    else _onLogout();
+    if(ev === 'SIGNED_IN' || ev === 'TOKEN_REFRESHED') {
+      if(session) _onLogin(session.user);
+    } else if(ev === 'SIGNED_OUT') {
+      _onLogout();
+    }
   });
 });
 
