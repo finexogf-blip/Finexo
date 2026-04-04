@@ -739,6 +739,7 @@ async function savePerfil() {
 
 // ── MIS SOLICITUDES ──
 async function loadMisSolicitudes() {
+  window._diagItems = [];
   var r = await _supa.from('diagnosticos').select('*').eq('user_id', _user.id).order('created_at', {ascending:false});
   var items = r.data || [];
   var tbody = document.getElementById('misSolicitudesBody');
@@ -756,7 +757,10 @@ async function loadMisSolicitudes() {
     html += '<td style="font-family:monospace;font-size:12px;color:var(--gray)">'+ref+'</td>';
     html += '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item.objetivo||'—')+'</td>';
     html += '<td><span class="status-badge status-'+status.replace(' ','.')+'">'+status+'</span></td>';
-    html += '<td><button class="btn-sm" onclick="openDetail('+JSON.stringify(JSON.stringify(item))+')">Ver →</button></td>';
+    window._diagItems = window._diagItems || [];
+    var idx = window._diagItems.length;
+    window._diagItems.push(item);
+    html += '<td><button class="btn-sm" onclick="openDetail('+idx+')">Ver &#8594;</button></td>';
     html += '</tr>';
   });
   tbody.innerHTML = html;
@@ -764,6 +768,7 @@ async function loadMisSolicitudes() {
 
 // ── ADMIN: TODAS LAS SOLICITUDES ──
 async function loadAdminSolicitudes() {
+  window._adminItems = [];
   var filtro = document.getElementById('filterEstatus') ? document.getElementById('filterEstatus').value : '';
   var query = _supa.from('diagnosticos').select('*').order('created_at', {ascending:false});
   if(filtro) query = query.eq('estatus', filtro);
@@ -798,7 +803,10 @@ async function loadAdminSolicitudes() {
     html += '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item.objetivo||'—')+'</td>';
     html += '<td style="color:var(--green-light)">'+(item.flujo_libre||'—')+'</td>';
     html += '<td><span class="status-badge status-'+status.replace(' ','.')+'">'+status+'</span></td>';
-    html += '<td><button class="btn-sm" onclick="openAdminDetail('+JSON.stringify(JSON.stringify(item))+')">Gestionar →</button></td>';
+    window._adminItems = window._adminItems || [];
+    var aidx = window._adminItems.length;
+    window._adminItems.push(item);
+    html += '<td><button class="btn-sm" onclick="openAdminDetail('+aidx+')">Gestionar &#8594;</button></td>';
     html += '</tr>';
   });
   tbody.innerHTML = html;
@@ -806,58 +814,62 @@ async function loadAdminSolicitudes() {
 
 // ── ADMIN: USUARIOS ──
 async function loadUsuarios() {
+  // Use secure view joining auth.users + roles
+  var uResult = await _supa.from('usuarios_vista').select('*');
+  var users = uResult.data || [];
+
   // Get diagnosticos count per user
   var dResult = await _supa.from('diagnosticos').select('user_id');
   var diags = dResult.data || [];
   var countMap = {};
   diags.forEach(function(d){ countMap[d.user_id] = (countMap[d.user_id]||0)+1; });
 
-  // Get roles
-  var rResult = await _supa.from('roles').select('*');
-  var roles = rResult.data || [];
-
-  // Get perfiles
-  var pResult = await _supa.from('perfiles').select('id, nombre_completo');
-  var perfiles = pResult.data || [];
-  var perfilMap = {};
-  perfiles.forEach(function(p){ perfilMap[p.id] = p.nombre_completo; });
-
   var tbody = document.getElementById('usuariosBody');
-  if(!roles.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><div class="empty-txt">No hay usuarios registrados.</div></div></td></tr>';
+  if(!users.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">&#x1F465;</div><div class="empty-txt">No hay usuarios registrados.</div></div></td></tr>';
     return;
   }
 
   var html = '';
-  roles.forEach(function(r) {
-    var nombre = perfilMap[r.user_id] || '—';
-    var diag_count = countMap[r.user_id] || 0;
-    var fecha = new Date(r.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'short',year:'numeric'});
-    html += '<tr class="user-row">';
-    html += '<td style="font-weight:600">'+(nombre!=='—'?nombre:'Sin perfil')+'</td>';
-    html += '<td style="font-size:12px;color:var(--gray)">'+r.user_id.substring(0,16)+'...</td>';
+  users.forEach(function(u) {
+    var nombre = u.nombre || 'Sin perfil';
+    var diag_count = countMap[u.id] || 0;
+    var fecha = new Date(u.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'short',year:'numeric'});
+    var rol = u.rol || 'cliente';
+    html += '<tr>';
+    html += '<td style="font-weight:600">'+nombre+'</td>';
+    html += '<td style="font-size:12px;color:var(--gray)">'+u.email+'</td>';
     html += '<td style="font-size:12px">'+fecha+'</td>';
     html += '<td style="text-align:center">'+diag_count+'</td>';
-    html += '<td><select class="role-select" id="role-'+r.user_id+'">'
-      + '<option value="cliente"'+(r.rol==='cliente'?' selected':'')+'>Cliente</option>'
-      + '<option value="admin"'+(r.rol==='admin'?' selected':'')+'>Admin</option>'
-      + '</select></td>';
-    html += '<td><button class="btn-sm" onclick="saveRole(\''+r.user_id+'\')">Guardar</button></td>';
+    html += '<td><select class="role-select" id="role-'+u.id+'">';
+    html += '<option value="cliente"'+(rol==='cliente'?' selected':'')+'>Cliente</option>';
+    html += '<option value="admin"'+(rol==='admin'?' selected':'')+'>Admin</option>';
+    html += '</select></td>';
+    html += '<td><button class="btn-sm" id="rbtn-'+u.id+'" data-uid="'+u.id+'" onclick="saveRole(this.dataset.uid)">Guardar</button></td>';
     html += '</tr>';
   });
   tbody.innerHTML = html;
+
 }
 
 async function saveRole(userId) {
   var newRole = document.getElementById('role-'+userId).value;
-  var r = await _supa.from('roles').upsert({user_id:userId, rol:newRole, asignado_por:_user.id});
-  if(!r.error) alert('Rol actualizado correctamente.');
-  else alert('Error: ' + r.error.message);
+  var r = await _supa.from('roles').upsert(
+    {user_id:userId, rol:newRole, asignado_por:_user.id},
+    {onConflict:'user_id'}
+  );
+  if(!r.error) {
+    // Show inline confirmation
+    var btn = document.getElementById('rbtn-'+userId);
+    if(btn){ btn.textContent = '&#x2713; Guardado'; setTimeout(function(){ btn.textContent='Guardar'; },2000); }
+  } else {
+    alert('Error: ' + r.error.message);
+  }
 }
 
 // ── DETAIL MODALS ──
-function openDetail(itemJson) {
-  var item = JSON.parse(itemJson);
+function openDetail(idx) {
+  var item = window._diagItems[idx];
   var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'long',year:'numeric'});
   var status = item.estatus || 'Nuevo';
   var html = '';
@@ -887,8 +899,8 @@ function openDetail(itemJson) {
   document.getElementById('detailModal').classList.add('open');
 }
 
-function openAdminDetail(itemJson) {
-  var item = JSON.parse(itemJson);
+function openAdminDetail(idx) {
+  var item = window._adminItems[idx];
   var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'long',year:'numeric'});
   var status = item.estatus || 'Nuevo';
   var html = '';
@@ -922,7 +934,8 @@ function openAdminDetail(itemJson) {
   html += '</select></div>';
   html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:rgba(255,255,255,0.45);display:block;margin-bottom:5px">Notas para el cliente</label>';
   html += '<textarea class="notes-input" id="adminNotes" placeholder="Escribe tus observaciones...">'+(item.notas_admin||'')+'</textarea></div>';
-  html += '<button class="update-btn" onclick="updateSolicitud(\''+item.id+'\')">Guardar cambios</button>';
+  window._currentDetailId = item.id;
+  html += '<button class="update-btn" onclick="updateSolicitud(window._currentDetailId)">Guardar cambios</button>';
   html += '<span id="updateMsg" style="font-size:12px;color:var(--green-light);margin-left:12px;display:none">✓ Guardado</span>';
   html += '</div>';
 
