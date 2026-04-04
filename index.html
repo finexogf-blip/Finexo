@@ -1026,7 +1026,9 @@ function submitDiag(){
 function showDiagDone(){
   setProgress(8);
   var ref='FIN-'+Date.now().toString(36).toUpperCase();
-  document.getElementById('diagForm').innerHTML='<div class="diag-done-wrap"><div class="diag-done-icon">&#x2705;</div><div class="diag-done-title">&#161;Listo! Informaci&#243;n recibida.</div><div class="diag-done-text">Un asesor de <strong>Finexo Advisory</strong> revisar&#225; tu caso y se comunicar&#225; contigo en las pr&#243;ximas <strong>24 horas</strong> con un plan personalizado.</div><div class="diag-ref">Ref: '+ref+'</div></div>';
+  var userInfo = _user ? '&#x2713; Guardado en tu portal' : '&#x26A0; Sin sesion activa';
+  var userColor = _user ? 'var(--green-light)' : '#E74C3C';
+  document.getElementById('diagForm').innerHTML='<div class="diag-done-wrap"><div class="diag-done-icon">&#x2705;</div><div class="diag-done-title">&#161;Listo! Informaci&#243;n recibida.</div><div class="diag-done-text">Un asesor de <strong>Finexo Advisory</strong> revisar&#225; tu caso y se comunicar&#225; contigo en las pr&#243;ximas <strong>24 horas</strong> con un plan personalizado.</div><div class="diag-ref">Ref: '+ref+'</div><div style="font-size:12px;color:'+userColor+';margin-top:10px">'+userInfo+'</div></div>';
 }
 
 function renderReport(r){
