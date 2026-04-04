@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal — Finexo Advisory</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D1F3C;--navy2:#152845;--navy3:#1a3356;
+  --green:#3A7D44;--green2:#4A9E57;--green-light:#6EC97A;
+  --gold:#C8A951;--white:#FFFFFF;--gray:#8A9AB0;
+  --text:#1A2B42;--border:rgba(255,255,255,0.08);
+  --card:rgba(255,255,255,0.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;overflow-x:hidden;}
+
+/* AUTH GATE */
+#authGate{position:fixed;inset:0;background:var(--navy);z-index:999;display:flex;align-items:center;justify-content:center;}
+.gate-box{text-align:center;max-width:400px;padding:20px;}
+.gate-logo{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--green-light);margin-bottom:6px;}
+.gate-logo span{color:var(--white);font-weight:300;}
+.gate-sub{font-size:13px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;}
+.gate-tabs{display:flex;background:rgba(255,255,255,0.05);border-radius:12px;padding:4px;margin-bottom:24px;}
+.gate-tab{flex:1;padding:10px;border:none;background:transparent;color:rgba(255,255,255,0.5);font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border-radius:9px;transition:all .2s;}
+.gate-tab.active{background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);}
+.gate-fld{margin-bottom:14px;text-align:left;}
+.gate-fld label{display:block;font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:.3px;}
+.gate-fld input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;color:var(--white);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.gate-fld input:focus{border-color:rgba(58,125,68,0.6);}
+.gate-fld input::placeholder{color:rgba(255,255,255,0.2);}
+.gate-btn{width:100%;background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);border:none;border-radius:10px;padding:13px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:4px;}
+.gate-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(58,125,68,0.35);}
+.gate-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.gate-msg{font-size:13px;text-align:center;margin-top:12px;padding:10px 14px;border-radius:8px;display:none;line-height:1.5;}
+.gate-msg.err{background:rgba(231,76,60,0.1);color:#E74C3C;border:1px solid rgba(231,76,60,0.2);display:block;}
+.gate-msg.ok{background:rgba(58,125,68,0.1);color:var(--green-light);border:1px solid rgba(58,125,68,0.2);display:block;}
+.gate-link{font-size:12px;color:rgba(255,255,255,0.35);text-align:center;margin-top:12px;}
+.gate-link a{color:var(--green-light);text-decoration:none;cursor:pointer;}
+.gate-back{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,0.4);font-size:13px;text-decoration:none;margin-bottom:28px;transition:color .2s;}
+.gate-back:hover{color:var(--green-light);}
+
+/* LAYOUT */
+#app{display:none;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:rgba(10,20,40,0.98);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s;}
+.sidebar-logo{padding:24px 22px 20px;border-bottom:1px solid var(--border);}
+.sidebar-logo-txt{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--green-light);}
+.sidebar-logo-txt span{color:var(--white);font-weight:300;}
+.sidebar-logo-sub{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.sidebar-user{padding:16px 22px;border-bottom:1px solid var(--border);}
+.sidebar-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--green),#2A5C32);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px;}
+.sidebar-name{font-size:14px;font-weight:600;color:var(--white);}
+.sidebar-email{font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sidebar-role{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;margin-top:5px;font-weight:600;letter-spacing:.5px;}
+.sidebar-role.admin{background:rgba(200,169,81,0.15);color:var(--gold);border:1px solid rgba(200,169,81,0.25);}
+.sidebar-role.cliente{background:rgba(58,125,68,0.12);color:var(--green-light);border:1px solid rgba(58,125,68,0.2);}
+.sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;}
+.nav-section{font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:1.5px;text-transform:uppercase;padding:10px 10px 6px;margin-top:6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.55);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;border:none;background:transparent;width:100%;text-align:left;font-family:'Outfit',sans-serif;}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:var(--white);}
+.nav-item.active{background:rgba(58,125,68,0.15);color:var(--green-light);border:1px solid rgba(58,125,68,0.2);}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7;}
+.nav-item.active svg{opacity:1;}
+.sidebar-footer{padding:16px 12px;border-top:1px solid var(--border);}
+.btn-logout{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(255,255,255,0.45);font-size:13px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;}
+.btn-logout:hover{border-color:rgba(231,76,60,0.3);color:#E74C3C;}
+.btn-home{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(255,255,255,0.45);font-size:13px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;margin-bottom:8px;text-decoration:none;}
+.btn-home:hover{border-color:rgba(58,125,68,0.3);color:var(--green-light);}
+
+/* MAIN CONTENT */
+.main{margin-left:240px;min-height:100vh;padding:32px 36px;}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* PAGE HEADER */
+.page-hdr{margin-bottom:32px;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--white);margin-bottom:4px;}
+.page-sub{font-size:14px;color:rgba(255,255,255,0.45);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.card-title{font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:.8px;text-transform:uppercase;margin-bottom:16px;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.stat-box-num{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--white);line-height:1;}
+.stat-box-num span{color:var(--green-light);}
+.stat-box-lbl{font-size:12px;color:rgba(255,255,255,0.4);margin-top:5px;letter-spacing:.3px;}
+
+/* PROGRESS BAR */
+.progress-wrap{margin-bottom:28px;}
+.progress-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.progress-lbl{font-size:14px;font-weight:600;}
+.progress-pct{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--green-light);}
+.progress-bar{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-light));border-radius:4px;transition:width .6s ease;}
+.progress-steps{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.prog-step{font-size:11px;padding:4px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);}
+.prog-step.done{background:rgba(58,125,68,0.12);border-color:rgba(58,125,68,0.25);color:var(--green-light);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:.3px;}
+.form-group input,.form-group select{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:var(--white);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{border-color:rgba(58,125,68,0.5);}
+.form-group input::placeholder{color:rgba(255,255,255,0.2);}
+.form-group select option{background:var(--navy2);}
+.save-btn{background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);border:none;border-radius:10px;padding:12px 28px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px;}
+.save-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(58,125,68,0.3);}
+.save-msg{font-size:13px;padding:8px 14px;border-radius:8px;display:none;margin-top:10px;}
+.save-msg.ok{background:rgba(58,125,68,0.1);color:var(--green-light);border:1px solid rgba(58,125,68,0.2);display:block;}
+.save-msg.err{background:rgba(231,76,60,0.1);color:#E74C3C;border:1px solid rgba(231,76,60,0.2);display:block;}
+
+/* SOLICITUDES TABLE */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background .2s;}
+tbody tr:hover{background:rgba(255,255,255,0.03);}
+tbody td{padding:13px 14px;font-size:13.5px;color:rgba(255,255,255,0.8);}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;}
+.status-Nuevo{background:rgba(58,125,68,0.12);color:var(--green-light);border:1px solid rgba(58,125,68,0.2);}
+.status-Revisando{background:rgba(200,169,81,0.12);color:var(--gold);border:1px solid rgba(200,169,81,0.2);}
+.status-En.proceso{background:rgba(52,152,219,0.12);color:#5DADE2;border:1px solid rgba(52,152,219,0.2);}
+.status-Completado{background:rgba(39,174,96,0.12);color:#2ECC71;border:1px solid rgba(39,174,96,0.2);}
+.status-Cancelado{background:rgba(231,76,60,0.12);color:#E74C3C;border:1px solid rgba(231,76,60,0.2);}
+.btn-sm{background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;}
+.btn-sm:hover{border-color:rgba(58,125,68,0.4);color:var(--green-light);}
+.empty-state{text-align:center;padding:48px 20px;color:rgba(255,255,255,0.3);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-txt{font-size:14px;}
+
+/* DETAIL MODAL */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:flex-start;justify-content:center;padding:30px 20px;backdrop-filter:blur(6px);overflow-y:auto;}
+.detail-overlay.open{display:flex;}
+.detail-box{width:100%;max-width:680px;background:var(--navy2);border:1px solid rgba(58,125,68,0.2);border-radius:20px;overflow:hidden;margin:auto;}
+.detail-hdr{background:var(--navy);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.detail-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;}
+.detail-close{width:32px;height:32px;background:rgba(255,255,255,0.08);border:none;border-radius:8px;color:rgba(255,255,255,0.6);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.detail-body{padding:24px;}
+.detail-row{display:flex;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.detail-row:last-child{border-bottom:none;margin-bottom:0;}
+.detail-lbl{font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.8px;min-width:130px;flex-shrink:0;padding-top:2px;}
+.detail-val{font-size:13.5px;color:rgba(255,255,255,0.85);line-height:1.6;}
+.status-select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none;width:100%;margin-bottom:10px;}
+.notes-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 13px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:80px;}
+.update-btn{background:linear-gradient(135deg,var(--green),#2A5C32);color:var(--white);border:none;border-radius:8px;padding:10px 22px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+
+/* ADMIN USER TABLE */
+.user-row td:last-child{display:flex;gap:6px;align-items:center;}
+.role-select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:5px 10px;color:var(--white);font-family:'Outfit',sans-serif;font-size:12px;outline:none;}
+
+/* MOBILE */
+.mob-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;background:rgba(13,31,60,0.97);border-bottom:1px solid var(--border);padding:12px 18px;align-items:center;justify-content:space-between;backdrop-filter:blur(12px);}
+.mob-menu-btn{background:none;border:none;color:var(--white);cursor:pointer;display:flex;flex-direction:column;gap:5px;}
+.mob-menu-btn span{width:22px;height:2px;background:var(--white);border-radius:2px;display:block;}
+.mob-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--green-light);}
+.mob-logo span{color:var(--white);font-weight:300;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99;}
+.sidebar-overlay.open{display:block;}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:80px 18px 30px;}
+  .mob-bar{display:flex;}
+  .form-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:500px){
+  .stats-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="authGate">
+  <div class="gate-box">
+    <a href="index.html" class="gate-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      Volver al inicio
+    </a>
+    <div class="gate-logo">Finexo<span> Advisory</span></div>
+    <div class="gate-sub">Portal del Cliente</div>
+    <div class="gate-tabs">
+      <button class="gate-tab active" id="gTabA" onclick="gTab(0)">Iniciar sesión</button>
+      <button class="gate-tab" id="gTabB" onclick="gTab(1)">Crear cuenta</button>
+    </div>
+    <div id="gFrmLogin">
+      <div class="gate-fld"><label>Email</label><input type="email" id="gEmail" placeholder="correo@ejemplo.com"></div>
+      <div class="gate-fld"><label>Contraseña</label><input type="password" id="gPass" placeholder="••••••••"></div>
+      <button class="gate-btn" id="gBtnLogin" onclick="gLogin()">Entrar al portal</button>
+      <div class="gate-link">¿Olvidaste tu contraseña? <a onclick="gReset()">Recuperar</a></div>
+    </div>
+    <div id="gFrmSignup" style="display:none">
+      <div class="gate-fld"><label>Nombre completo</label><input type="text" id="gName" placeholder="Juan García"></div>
+      <div class="gate-fld"><label>Email</label><input type="email" id="gEmailS" placeholder="correo@ejemplo.com"></div>
+      <div class="gate-fld"><label>Contraseña</label><input type="password" id="gPassS" placeholder="Mínimo 6 caracteres"></div>
+      <button class="gate-btn" id="gBtnSignup" onclick="gSignup()">Crear cuenta</button>
+    </div>
+    <div class="gate-msg" id="gMsg"></div>
+  </div>
+</div>
+
+<!-- MOBILE BAR -->
+<div class="mob-bar" id="mobBar">
+  <button class="mob-menu-btn" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+  <div class="mob-logo">Finexo<span> Advisory</span></div>
+  <div style="width:32px"></div>
+</div>
+<div class="sidebar-overlay" id="sideOverlay" onclick="toggleSidebar()"></div>
+
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-txt">Finexo<span> Advisory</span></div>
+      <div class="sidebar-logo-sub">Portal del Cliente</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sAvatar">?</div>
+      <div class="sidebar-name" id="sName">Cargando...</div>
+      <div class="sidebar-email" id="sEmail"></div>
+      <span class="sidebar-role cliente" id="sRole">Cliente</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Mi cuenta</div>
+      <button class="nav-item active" onclick="showPage('inicio')" data-page="inicio">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        Inicio
+      </button>
+      <button class="nav-item" onclick="showPage('perfil')" data-page="perfil">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Mi Perfil
+      </button>
+      <button class="nav-item" onclick="showPage('solicitudes')" data-page="solicitudes">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        Mis Solicitudes
+      </button>
+      <div class="nav-section admin-only" style="display:none">Administración</div>
+      <button class="nav-item admin-only" style="display:none" onclick="showPage('admin-solicitudes')" data-page="admin-solicitudes">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Todas las Solicitudes
+      </button>
+      <button class="nav-item admin-only" style="display:none" onclick="showPage('admin-usuarios')" data-page="admin-usuarios">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        Usuarios
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="index.html" class="btn-home">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        Ir al inicio
+      </a>
+      <button class="btn-logout" onclick="doLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- INICIO -->
+    <div class="page active" id="page-inicio">
+      <div class="page-hdr">
+        <div class="page-title">Bienvenido, <span id="welcomeName" style="color:var(--green-light)">...</span></div>
+        <div class="page-sub">Panel de control de tu cuenta Finexo Advisory</div>
+      </div>
+      <div class="stats-row" id="statsRow">
+        <div class="stat-box">
+          <div class="stat-box-num" id="statTotal">0</div>
+          <div class="stat-box-lbl">Solicitudes totales</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num" id="statNuevas" style="color:var(--green-light)">0</div>
+          <div class="stat-box-lbl">En proceso</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num" id="statCompletadas" style="color:var(--gold)">0</div>
+          <div class="stat-box-lbl">Completadas</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num" id="statPerfil">0<span>%</span></div>
+          <div class="stat-box-lbl">Perfil completado</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Completar perfil</div>
+        <div class="progress-wrap">
+          <div class="progress-hdr">
+            <span class="progress-lbl">Progreso del perfil</span>
+            <span class="progress-pct" id="progPct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+          <div class="progress-steps" id="progSteps"></div>
+        </div>
+        <button class="save-btn" onclick="showPage('perfil')" style="padding:10px 20px;font-size:13px">Completar perfil →</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Solicitudes recientes</div>
+        <div id="recentSolicitudes"></div>
+      </div>
+    </div>
+
+    <!-- PERFIL -->
+    <div class="page" id="page-perfil">
+      <div class="page-hdr">
+        <div class="page-title">Mi Perfil</div>
+        <div class="page-sub">Tu información personal ayuda a personalizar el análisis financiero</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Información personal</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Nombre completo</label>
+            <input type="text" id="pNombre" placeholder="Juan García">
+          </div>
+          <div class="form-group">
+            <label>Cédula de identidad</label>
+            <input type="text" id="pCedula" placeholder="001-1234567-8">
+          </div>
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input type="text" id="pTelefono" placeholder="+1 809 000 0000">
+          </div>
+          <div class="form-group">
+            <label>Fecha de nacimiento</label>
+            <input type="date" id="pFechaNac">
+          </div>
+          <div class="form-group">
+            <label>Ocupación</label>
+            <input type="text" id="pOcupacion" placeholder="Ej: Ingeniero, Comerciante...">
+          </div>
+          <div class="form-group">
+            <label>Lugar de trabajo</label>
+            <input type="text" id="pTrabajo" placeholder="Nombre de la empresa">
+          </div>
+          <div class="form-group">
+            <label>Ingreso mensual estimado</label>
+            <select id="pIngreso">
+              <option value="">Selecciona un rango</option>
+              <option>Menos de RD$25,000</option>
+              <option>RD$25,000 – 50,000</option>
+              <option>RD$50,000 – 100,000</option>
+              <option>RD$100,000 – 200,000</option>
+              <option>Más de RD$200,000</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Dirección</label>
+            <input type="text" id="pDireccion" placeholder="Calle, sector, número...">
+          </div>
+          <div class="form-group">
+            <label>Ciudad</label>
+            <input type="text" id="pCiudad" placeholder="Santo Domingo">
+          </div>
+          <div class="form-group">
+            <label>Provincia</label>
+            <input type="text" id="pProvincia" placeholder="Distrito Nacional">
+          </div>
+        </div>
+        <button class="save-btn" onclick="savePerfil()">Guardar perfil</button>
+        <div class="save-msg" id="perfilMsg"></div>
+      </div>
+    </div>
+
+    <!-- MIS SOLICITUDES -->
+    <div class="page" id="page-solicitudes">
+      <div class="page-hdr">
+        <div class="page-title">Mis Solicitudes</div>
+        <div class="page-sub">Historial de diagnósticos y su estado actual</div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Referencia</th>
+                <th>Objetivo</th>
+                <th>Estatus</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="misSolicitudesBody">
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-txt">Cargando solicitudes...</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN: TODAS LAS SOLICITUDES -->
+    <div class="page" id="page-admin-solicitudes">
+      <div class="page-hdr">
+        <div class="page-title">Todas las Solicitudes</div>
+        <div class="page-sub">Gestiona y acciona las solicitudes de diagnóstico</div>
+      </div>
+      <div class="stats-row" id="adminStatsRow" style="margin-bottom:20px"></div>
+      <div class="card">
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+          <select id="filterEstatus" onchange="loadAdminSolicitudes()" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;outline:none;">
+            <option value="">Todos los estatus</option>
+            <option>Nuevo</option>
+            <option>Revisando</option>
+            <option>En proceso</option>
+            <option>Completado</option>
+            <option>Cancelado</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Teléfono</th>
+                <th>Objetivo</th>
+                <th>Flujo libre</th>
+                <th>Estatus</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="adminSolicitudesBody">
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-txt">Cargando...</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN: USUARIOS -->
+    <div class="page" id="page-admin-usuarios">
+      <div class="page-hdr">
+        <div class="page-title">Gestión de Usuarios</div>
+        <div class="page-sub">Administra los roles y accesos de los usuarios registrados</div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Registro</th>
+                <th>Solicitudes</th>
+                <th>Rol</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="usuariosBody">
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><div class="empty-txt">Cargando usuarios...</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="detail-overlay" id="detailModal">
+  <div class="detail-box">
+    <div class="detail-hdr">
+      <div class="detail-title">Detalle de Solicitud</div>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+var SUPA_URL = 'https://nlmbuhuuqpcsnvfryrkb.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sbWJ1aHV1cXBjc252ZnJ5cmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjUxNTMsImV4cCI6MjA5MDkwMTE1M30.9CnHr0Qj4spC2ZyUirhLVKp-EN6g1k5GKI0ny89k8Oc';
+var _supa = null;
+var _user = null;
+var _rol = 'cliente';
+var _perfil = null;
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', function() {
+  _supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  // Handle email confirmation token in URL hash
+  if(window.location.hash && window.location.hash.includes('access_token')) {
+    _supa.auth.getSession().then(function(r) {
+      if(r.data && r.data.session) {
+        history.replaceState(null, '', window.location.pathname);
+        initApp(r.data.session.user);
+      }
+    });
+    return;
+  }
+
+  _supa.auth.getSession().then(function(r) {
+    if(r.data && r.data.session) initApp(r.data.session.user);
+  });
+
+  _supa.auth.onAuthStateChange(function(ev, session) {
+    if((ev === 'SIGNED_IN' || ev === 'TOKEN_REFRESHED') && session) initApp(session.user);
+    else if(ev === 'SIGNED_OUT') { _user = null; showGate(); }
+  });
+});
+
+async function initApp(user) {
+  _user = user;
+
+  // Load role
+  var rResult = await _supa.from('roles').select('rol').eq('user_id', user.id).single();
+  _rol = (rResult.data && rResult.data.rol) ? rResult.data.rol : 'cliente';
+
+  // If no role exists, create default
+  if(!rResult.data) {
+    await _supa.from('roles').insert({user_id: user.id, rol: 'cliente'});
+  }
+
+  // Update sidebar
+  var name = (user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name : user.email.split('@')[0];
+  document.getElementById('sAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('sName').textContent = name;
+  document.getElementById('sEmail').textContent = user.email;
+  document.getElementById('welcomeName').textContent = name.split(' ')[0];
+  document.getElementById('sRole').textContent = _rol === 'admin' ? 'Administrador' : 'Cliente';
+  document.getElementById('sRole').className = 'sidebar-role ' + _rol;
+
+  // Show admin nav if admin
+  if(_rol === 'admin') {
+    document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = ''; });
+  }
+
+  // Load profile
+  var pResult = await _supa.from('perfiles').select('*').eq('id', user.id).single();
+  _perfil = pResult.data || {};
+  fillPerfilForm(_perfil);
+  updateProgress(_perfil);
+
+  // Show app
+  hideGate();
+  loadInicioDash();
+}
+
+function showGate() {
+  document.getElementById('authGate').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+function hideGate() {
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ── AUTH GATE ──
+function gTab(n) {
+  document.getElementById('gFrmLogin').style.display = n===0?'block':'none';
+  document.getElementById('gFrmSignup').style.display = n===1?'block':'none';
+  document.getElementById('gTabA').classList.toggle('active', n===0);
+  document.getElementById('gTabB').classList.toggle('active', n===1);
+  setGMsg('','');
+}
+function setGMsg(msg, type) {
+  var el = document.getElementById('gMsg');
+  el.textContent = msg;
+  el.className = 'gate-msg' + (type?' '+type:'');
+}
+function setGLoading(id, on) {
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.disabled = on;
+  el.textContent = on ? 'Procesando...' : (id==='gBtnLogin'?'Entrar al portal':'Crear cuenta');
+}
+async function gLogin() {
+  var e = document.getElementById('gEmail').value.trim();
+  var p = document.getElementById('gPass').value;
+  if(!e||!p){ setGMsg('Completa todos los campos.','err'); return; }
+  setGLoading('gBtnLogin', true);
+  var r = await _supa.auth.signInWithPassword({email:e, password:p});
+  setGLoading('gBtnLogin', false);
+  if(r.error) setGMsg('Email o contraseña incorrectos.','err');
+}
+async function gSignup() {
+  var name = document.getElementById('gName').value.trim();
+  var e = document.getElementById('gEmailS').value.trim();
+  var p = document.getElementById('gPassS').value;
+  if(!name||!e||!p){ setGMsg('Completa todos los campos.','err'); return; }
+  if(p.length<6){ setGMsg('La contraseña debe tener al menos 6 caracteres.','err'); return; }
+  setGLoading('gBtnSignup', true);
+  var r = await _supa.auth.signUp({email:e, password:p, options:{data:{full_name:name}}});
+  setGLoading('gBtnSignup', false);
+  if(r.error) setGMsg(r.error.message,'err');
+  else setGMsg('¡Cuenta creada! Revisa tu email para confirmar.','ok');
+}
+async function gReset() {
+  var e = document.getElementById('gEmail').value.trim();
+  if(!e){ setGMsg('Ingresa tu email primero.','err'); return; }
+  await _supa.auth.resetPasswordForEmail(e, {redirectTo:'https://finexogf-blip.github.io/Finexo/dashboard.html'});
+  setGMsg('Te enviamos un link para restablecer tu contraseña.','ok');
+}
+async function doLogout() {
+  await _supa.auth.signOut();
+}
+
+// ── NAVIGATION ──
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var pageEl = document.getElementById('page-'+page);
+  if(pageEl) pageEl.classList.add('active');
+  var navEl = document.querySelector('[data-page="'+page+'"]');
+  if(navEl) navEl.classList.add('active');
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sideOverlay').classList.remove('open');
+  // Load data for page
+  if(page==='solicitudes') loadMisSolicitudes();
+  if(page==='admin-solicitudes') loadAdminSolicitudes();
+  if(page==='admin-usuarios') loadUsuarios();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sideOverlay').classList.toggle('open');
+}
+
+// ── INICIO DASHBOARD ──
+async function loadInicioDash() {
+  var r = await _supa.from('diagnosticos').select('*').eq('user_id', _user.id).order('created_at', {ascending:false});
+  var items = r.data || [];
+
+  document.getElementById('statTotal').textContent = items.length;
+  document.getElementById('statNuevas').textContent = items.filter(function(i){ return i.estatus !== 'Completado' && i.estatus !== 'Cancelado'; }).length;
+  document.getElementById('statCompletadas').textContent = items.filter(function(i){ return i.estatus === 'Completado'; }).length;
+
+  var pct = calcProgress(_perfil);
+  document.getElementById('statPerfil').innerHTML = pct + '<span>%</span>';
+
+  // Recent solicitudes
+  var container = document.getElementById('recentSolicitudes');
+  if(!items.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-txt">No tienes solicitudes aún. <a href="index.html" style="color:var(--green-light)">Iniciar diagnóstico →</a></div></div>';
+    return;
+  }
+  var html = '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Objetivo</th><th>Estatus</th></tr></thead><tbody>';
+  items.slice(0,5).forEach(function(item) {
+    var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'short',year:'numeric'});
+    var status = item.estatus || 'Nuevo';
+    html += '<tr><td>'+fecha+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item.objetivo||'—')+'</td><td><span class="status-badge status-'+status.replace(' ','.')+'">'+status+'</span></td></tr>';
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// ── PERFIL ──
+function calcProgress(p) {
+  if(!p) return 0;
+  var fields = ['nombre_completo','cedula','telefono','fecha_nacimiento','ocupacion','lugar_trabajo','ingreso_mensual','direccion','ciudad','provincia'];
+  var filled = fields.filter(function(f){ return p[f] && p[f].toString().trim(); }).length;
+  return Math.round((filled/fields.length)*100);
+}
+
+function updateProgress(p) {
+  var pct = calcProgress(p);
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('statPerfil').innerHTML = pct + '<span>%</span>';
+
+  var steps = [
+    {field:'nombre_completo', label:'Nombre'},
+    {field:'cedula', label:'Cédula'},
+    {field:'telefono', label:'Teléfono'},
+    {field:'fecha_nacimiento', label:'Fecha nac.'},
+    {field:'ocupacion', label:'Ocupación'},
+    {field:'lugar_trabajo', label:'Trabajo'},
+    {field:'ingreso_mensual', label:'Ingresos'},
+    {field:'direccion', label:'Dirección'},
+    {field:'ciudad', label:'Ciudad'},
+    {field:'provincia', label:'Provincia'}
+  ];
+  var stepsHtml = '';
+  steps.forEach(function(s) {
+    var done = p && p[s.field] && p[s.field].toString().trim();
+    stepsHtml += '<span class="prog-step'+(done?' done':'')+'">'+(done?'✓ ':'')+s.label+'</span>';
+  });
+  document.getElementById('progSteps').innerHTML = stepsHtml;
+}
+
+function fillPerfilForm(p) {
+  if(!p) return;
+  var fields = {pNombre:'nombre_completo',pCedula:'cedula',pTelefono:'telefono',
+    pFechaNac:'fecha_nacimiento',pOcupacion:'ocupacion',pTrabajo:'lugar_trabajo',
+    pIngreso:'ingreso_mensual',pDireccion:'direccion',pCiudad:'ciudad',pProvincia:'provincia'};
+  Object.keys(fields).forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el && p[fields[id]]) el.value = p[fields[id]];
+  });
+}
+
+async function savePerfil() {
+  var data = {
+    id: _user.id,
+    nombre_completo: document.getElementById('pNombre').value.trim(),
+    cedula: document.getElementById('pCedula').value.trim(),
+    telefono: document.getElementById('pTelefono').value.trim(),
+    fecha_nacimiento: document.getElementById('pFechaNac').value || null,
+    ocupacion: document.getElementById('pOcupacion').value.trim(),
+    lugar_trabajo: document.getElementById('pTrabajo').value.trim(),
+    ingreso_mensual: document.getElementById('pIngreso').value,
+    direccion: document.getElementById('pDireccion').value.trim(),
+    ciudad: document.getElementById('pCiudad').value.trim(),
+    provincia: document.getElementById('pProvincia').value.trim(),
+    updated_at: new Date().toISOString()
+  };
+
+  var r = await _supa.from('perfiles').upsert(data);
+  var msg = document.getElementById('perfilMsg');
+  if(r.error) {
+    msg.textContent = 'Error al guardar: ' + r.error.message;
+    msg.className = 'save-msg err';
+  } else {
+    _perfil = data;
+    updateProgress(_perfil);
+    msg.textContent = '✓ Perfil guardado correctamente';
+    msg.className = 'save-msg ok';
+    setTimeout(function(){ msg.style.display='none'; }, 3000);
+  }
+}
+
+// ── MIS SOLICITUDES ──
+async function loadMisSolicitudes() {
+  var r = await _supa.from('diagnosticos').select('*').eq('user_id', _user.id).order('created_at', {ascending:false});
+  var items = r.data || [];
+  var tbody = document.getElementById('misSolicitudesBody');
+  if(!items.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-txt">No tienes solicitudes aún. <a href="index.html" style="color:var(--green-light)">Iniciar diagnóstico →</a></div></div></td></tr>';
+    return;
+  }
+  var html = '';
+  items.forEach(function(item) {
+    var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'short',year:'numeric'});
+    var status = item.estatus || 'Nuevo';
+    var ref = item.id.substring(0,8).toUpperCase();
+    html += '<tr>';
+    html += '<td>'+fecha+'</td>';
+    html += '<td style="font-family:monospace;font-size:12px;color:var(--gray)">'+ref+'</td>';
+    html += '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item.objetivo||'—')+'</td>';
+    html += '<td><span class="status-badge status-'+status.replace(' ','.')+'">'+status+'</span></td>';
+    html += '<td><button class="btn-sm" onclick="openDetail('+JSON.stringify(JSON.stringify(item))+')">Ver →</button></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+// ── ADMIN: TODAS LAS SOLICITUDES ──
+async function loadAdminSolicitudes() {
+  var filtro = document.getElementById('filterEstatus') ? document.getElementById('filterEstatus').value : '';
+  var query = _supa.from('diagnosticos').select('*').order('created_at', {ascending:false});
+  if(filtro) query = query.eq('estatus', filtro);
+  var r = await query;
+  var items = r.data || [];
+
+  // Stats
+  var all = await _supa.from('diagnosticos').select('estatus');
+  var allItems = all.data || [];
+  var statsHtml = '';
+  var statuses = ['Nuevo','Revisando','En proceso','Completado','Cancelado'];
+  statuses.forEach(function(s) {
+    var count = allItems.filter(function(i){ return (i.estatus||'Nuevo') === s; }).length;
+    statsHtml += '<div class="stat-box"><div class="stat-box-num">'+count+'</div><div class="stat-box-lbl">'+s+'</div></div>';
+  });
+  statsHtml = '<div class="stat-box"><div class="stat-box-num">'+allItems.length+'</div><div class="stat-box-lbl">Total</div></div>' + statsHtml;
+  document.getElementById('adminStatsRow').innerHTML = statsHtml;
+
+  var tbody = document.getElementById('adminSolicitudesBody');
+  if(!items.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-txt">No hay solicitudes.</div></div></td></tr>';
+    return;
+  }
+  var html = '';
+  items.forEach(function(item) {
+    var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'short',year:'numeric'});
+    var status = item.estatus || 'Nuevo';
+    html += '<tr>';
+    html += '<td>'+fecha+'</td>';
+    html += '<td style="font-weight:600">'+(item.nombre||'—')+'</td>';
+    html += '<td>'+(item.telefono||'—')+'</td>';
+    html += '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item.objetivo||'—')+'</td>';
+    html += '<td style="color:var(--green-light)">'+(item.flujo_libre||'—')+'</td>';
+    html += '<td><span class="status-badge status-'+status.replace(' ','.')+'">'+status+'</span></td>';
+    html += '<td><button class="btn-sm" onclick="openAdminDetail('+JSON.stringify(JSON.stringify(item))+')">Gestionar →</button></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+// ── ADMIN: USUARIOS ──
+async function loadUsuarios() {
+  // Get diagnosticos count per user
+  var dResult = await _supa.from('diagnosticos').select('user_id');
+  var diags = dResult.data || [];
+  var countMap = {};
+  diags.forEach(function(d){ countMap[d.user_id] = (countMap[d.user_id]||0)+1; });
+
+  // Get roles
+  var rResult = await _supa.from('roles').select('*');
+  var roles = rResult.data || [];
+
+  // Get perfiles
+  var pResult = await _supa.from('perfiles').select('id, nombre_completo');
+  var perfiles = pResult.data || [];
+  var perfilMap = {};
+  perfiles.forEach(function(p){ perfilMap[p.id] = p.nombre_completo; });
+
+  var tbody = document.getElementById('usuariosBody');
+  if(!roles.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><div class="empty-txt">No hay usuarios registrados.</div></div></td></tr>';
+    return;
+  }
+
+  var html = '';
+  roles.forEach(function(r) {
+    var nombre = perfilMap[r.user_id] || '—';
+    var diag_count = countMap[r.user_id] || 0;
+    var fecha = new Date(r.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'short',year:'numeric'});
+    html += '<tr class="user-row">';
+    html += '<td style="font-weight:600">'+(nombre!=='—'?nombre:'Sin perfil')+'</td>';
+    html += '<td style="font-size:12px;color:var(--gray)">'+r.user_id.substring(0,16)+'...</td>';
+    html += '<td style="font-size:12px">'+fecha+'</td>';
+    html += '<td style="text-align:center">'+diag_count+'</td>';
+    html += '<td><select class="role-select" id="role-'+r.user_id+'">'
+      + '<option value="cliente"'+(r.rol==='cliente'?' selected':'')+'>Cliente</option>'
+      + '<option value="admin"'+(r.rol==='admin'?' selected':'')+'>Admin</option>'
+      + '</select></td>';
+    html += '<td><button class="btn-sm" onclick="saveRole(\''+r.user_id+'\')">Guardar</button></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+async function saveRole(userId) {
+  var newRole = document.getElementById('role-'+userId).value;
+  var r = await _supa.from('roles').upsert({user_id:userId, rol:newRole, asignado_por:_user.id});
+  if(!r.error) alert('Rol actualizado correctamente.');
+  else alert('Error: ' + r.error.message);
+}
+
+// ── DETAIL MODALS ──
+function openDetail(itemJson) {
+  var item = JSON.parse(itemJson);
+  var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'long',year:'numeric'});
+  var status = item.estatus || 'Nuevo';
+  var html = '';
+  var rows = [
+    ['Fecha', fecha],
+    ['Referencia', item.id.substring(0,8).toUpperCase()],
+    ['Nombre', item.nombre||'—'],
+    ['Teléfono', item.telefono||'—'],
+    ['Email', item.email_cliente||'—'],
+    ['Situación', item.situacion||'—'],
+    ['Deudas', item.deudas||'—'],
+    ['Ingresos', item.ingresos||'—'],
+    ['Gastos fijos', item.gastos_fijos||'—'],
+    ['Gastos variables', item.gastos_variables||'—'],
+    ['Flujo libre', item.flujo_libre||'—'],
+    ['Objetivo', item.objetivo||'—'],
+    ['Estatus', '<span class="status-badge status-'+status.replace(' ','.')+'">'+status+'</span>'],
+    ['Notas del asesor', item.notas_admin||'Pendiente de revisión']
+  ];
+  rows.forEach(function(r) {
+    html += '<div class="detail-row"><div class="detail-lbl">'+r[0]+'</div><div class="detail-val">'+r[1]+'</div></div>';
+  });
+  if(item.analisis_ia) {
+    html += '<div class="detail-row"><div class="detail-lbl">Análisis IA</div><div class="detail-val" style="white-space:pre-wrap;font-size:12.5px">'+item.analisis_ia+'</div></div>';
+  }
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function openAdminDetail(itemJson) {
+  var item = JSON.parse(itemJson);
+  var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'long',year:'numeric'});
+  var status = item.estatus || 'Nuevo';
+  var html = '';
+  var rows = [
+    ['Fecha', fecha],
+    ['Cliente', item.nombre||'—'],
+    ['Teléfono', item.telefono||'—'],
+    ['Email', item.email_cliente||'—'],
+    ['Situación', item.situacion||'—'],
+    ['Deudas', item.deudas||'—'],
+    ['Ingresos', item.ingresos||'—'],
+    ['Gastos fijos', item.gastos_fijos||'—'],
+    ['Gastos variables', item.gastos_variables||'—'],
+    ['Flujo libre', item.flujo_libre||'—'],
+    ['Objetivo', item.objetivo||'—']
+  ];
+  rows.forEach(function(r) {
+    html += '<div class="detail-row"><div class="detail-lbl">'+r[0]+'</div><div class="detail-val">'+r[1]+'</div></div>';
+  });
+  if(item.analisis_ia) {
+    html += '<div class="detail-row"><div class="detail-lbl">Análisis IA</div><div class="detail-val" style="white-space:pre-wrap;font-size:12.5px;line-height:1.7">'+item.analisis_ia+'</div></div>';
+  }
+  // Admin actions
+  html += '<div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">';
+  html += '<div class="card-title" style="margin-bottom:12px">Acciones del asesor</div>';
+  html += '<div style="margin-bottom:10px"><label style="font-size:12px;color:rgba(255,255,255,0.45);display:block;margin-bottom:5px">Cambiar estatus</label>';
+  html += '<select class="status-select" id="adminStatusSel">';
+  ['Nuevo','Revisando','En proceso','Completado','Cancelado'].forEach(function(s) {
+    html += '<option'+(s===status?' selected':'')+'>'+s+'</option>';
+  });
+  html += '</select></div>';
+  html += '<div style="margin-bottom:12px"><label style="font-size:12px;color:rgba(255,255,255,0.45);display:block;margin-bottom:5px">Notas para el cliente</label>';
+  html += '<textarea class="notes-input" id="adminNotes" placeholder="Escribe tus observaciones...">'+(item.notas_admin||'')+'</textarea></div>';
+  html += '<button class="update-btn" onclick="updateSolicitud(\''+item.id+'\')">Guardar cambios</button>';
+  html += '<span id="updateMsg" style="font-size:12px;color:var(--green-light);margin-left:12px;display:none">✓ Guardado</span>';
+  html += '</div>';
+
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+async function updateSolicitud(id) {
+  var status = document.getElementById('adminStatusSel').value;
+  var notes = document.getElementById('adminNotes').value;
+  var r = await _supa.from('diagnosticos').update({
+    estatus: status,
+    notas_admin: notes,
+    atendido_por: _user.id,
+    updated_at: new Date().toISOString()
+  }).eq('id', id);
+  if(!r.error) {
+    var msg = document.getElementById('updateMsg');
+    msg.style.display = 'inline';
+    setTimeout(function(){ msg.style.display='none'; }, 2500);
+    loadAdminSolicitudes(); // refresh
+  }
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+// Close modal on outside click
+document.addEventListener('click', function(e) {
+  if(e.target.id === 'detailModal') closeDetail();
+});
+</script>
+</body>
+</html>
