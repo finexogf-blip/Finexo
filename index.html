@@ -1042,11 +1042,12 @@ function renderReport(r){
 }
 
 // ── SUPABASE AUTH ──
-var _supa = null;
+// Initialize Supabase immediately
+var _supa = supabase.createClient('https://nlmbuhuuqpcsnvfryrkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sbWJ1aHV1cXBjc252ZnJ5cmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjUxNTMsImV4cCI6MjA5MDkwMTE1M30.9CnHr0Qj4spC2ZyUirhLVKp-EN6g1k5GKI0ny89k8Oc');
 var _user = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-  _supa = supabase.createClient('https://nlmbuhuuqpcsnvfryrkb.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sbWJ1aHV1cXBjc252ZnJ5cmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMjUxNTMsImV4cCI6MjA5MDkwMTE1M30.9CnHr0Qj4spC2ZyUirhLVKp-EN6g1k5GKI0ny89k8Oc');
+  // Restore session on page load
 
   // Handle email confirmation redirect with access_token in URL hash
   if(window.location.hash && window.location.hash.includes('access_token')) {
