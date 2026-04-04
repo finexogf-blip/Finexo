@@ -1006,7 +1006,16 @@ function submitDiag(){
   .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
   .then(function(d){
     var a=d.content&&d.content[0]?d.content[0].text:'';
-    if(a) fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({access_key:WEB3_KEY,subject:'FINEXO - Analisis IA: '+diagData.contacto_nombre,from_name:'Finexo IA',CLIENTE:diagData.contacto_nombre,TELEFONO:diagData.contacto_tel,ANALISIS_IA:a})}).catch(function(e){console.error(e);});
+    if(a) {
+      fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({access_key:WEB3_KEY,subject:'FINEXO - Analisis IA: '+diagData.contacto_nombre,from_name:'Finexo IA',CLIENTE:diagData.contacto_nombre,TELEFONO:diagData.contacto_tel,ANALISIS_IA:a})}).catch(function(e){console.error(e);});
+      // Save AI analysis to Supabase
+      if(_supa && _user) {
+        _supa.from('diagnosticos').update({analisis_ia: a}).eq('user_id', _user.id).order('created_at', {ascending:false}).limit(1).then(function(r){
+          if(r.error) console.error('AI update error:', r.error.message);
+          else console.log('AI analysis saved ✓');
+        });
+      }
+    }
   }).catch(function(e){console.log('AI skip:',e.message);});
 
   _saveToSupabase({nombre:diagData.contacto_nombre,telefono:diagData.contacto_tel,email:diagData.contacto_email||'',situacion:diagData.situacion.join(', '),deudas:dTxt,ingresos:iTxt,gastos_fijos:gfTxt,gastos_variables:gvTxt,flujo_libre:fl,objetivo:diagData.objetivo});
@@ -1157,9 +1166,12 @@ async function doLogout() {
   _onLogout();
 }
 
-async function _saveToSupabase(payload) {
-  if(!_supa || !_user) return;
-  var result = await _supa.from('diagnosticos').insert({
+function _saveToSupabase(payload) {
+  if(!_supa || !_user) {
+    console.warn('Supabase save skipped: no user session');
+    return;
+  }
+  _supa.from('diagnosticos').insert({
     user_id: _user.id,
     nombre: payload.nombre,
     telefono: payload.telefono,
@@ -1171,9 +1183,12 @@ async function _saveToSupabase(payload) {
     gastos_variables: payload.gastos_variables,
     flujo_libre: payload.flujo_libre,
     objetivo: payload.objetivo
+  }).then(function(result) {
+    if(result.error) console.error('Supabase error:', result.error.message, result.error);
+    else console.log('Saved to Supabase ✓', result.data);
+  }).catch(function(e) {
+    console.error('Supabase exception:', e);
   });
-  if(result.error) console.error('Supabase error:', result.error.message);
-  else console.log('Saved to Supabase ✓');
 }
 
 </script>
