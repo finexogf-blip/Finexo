@@ -1168,9 +1168,10 @@ async function doLogout() {
 
 function _saveToSupabase(payload) {
   if(!_supa || !_user) {
-    console.warn('Supabase save skipped: no user session');
+    console.warn('Supabase: no session. _supa=' + !!_supa + ' _user=' + !!_user);
     return;
   }
+  console.log('Saving to Supabase, user_id:', _user.id);
   _supa.from('diagnosticos').insert({
     user_id: _user.id,
     nombre: payload.nombre,
@@ -1184,10 +1185,18 @@ function _saveToSupabase(payload) {
     flujo_libre: payload.flujo_libre,
     objetivo: payload.objetivo
   }).then(function(result) {
-    if(result.error) console.error('Supabase error:', result.error.message, result.error);
-    else console.log('Saved to Supabase ✓', result.data);
+    if(result.error) {
+      console.error('Supabase error:', result.error.message);
+      // Show visible error in done screen
+      var doneEl = document.querySelector('.diag-done-text');
+      if(doneEl) doneEl.innerHTML += '<br><small style="color:rgba(255,255,255,0.3)">DB: ' + result.error.message + '</small>';
+    } else {
+      console.log('Saved to Supabase OK');
+      var doneEl = document.querySelector('.diag-done-text');
+      if(doneEl) doneEl.innerHTML += '<br><small style="color:var(--green-light)">&#x2713; Guardado en tu portal</small>';
+    }
   }).catch(function(e) {
-    console.error('Supabase exception:', e);
+    console.error('Supabase exception:', e.message);
   });
 }
 
