@@ -520,13 +520,18 @@ async function initApp(user) {
   _user = user;
 
   // Load role
-  var rResult = await _supa.from('roles').select('rol').eq('user_id', user.id).single();
-  _rol = (rResult.data && rResult.data.rol) ? rResult.data.rol : 'cliente';
-
-  // If no role exists, create default
-  if(!rResult.data) {
-    await _supa.from('roles').insert({user_id: user.id, rol: 'cliente'});
+  var rResult = await _supa.from('roles').select('rol').eq('user_id', user.id);
+  console.log('Role query result:', rResult);
+  if(rResult.data && rResult.data.length > 0) {
+    _rol = rResult.data[0].rol;
+  } else {
+    _rol = 'cliente';
+    // Create default role if doesn't exist
+    if(!rResult.error) {
+      await _supa.from('roles').insert({user_id: user.id, rol: 'cliente'});
+    }
   }
+  console.log('User role:', _rol);
 
   // Update sidebar
   var name = (user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name : user.email.split('@')[0];
@@ -538,8 +543,13 @@ async function initApp(user) {
   document.getElementById('sRole').className = 'sidebar-role ' + _rol;
 
   // Show admin nav if admin
+  console.log('Checking admin status, rol:', _rol);
   if(_rol === 'admin') {
-    document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = ''; });
+    console.log('Showing admin navigation');
+    document.querySelectorAll('.admin-only').forEach(function(el){ 
+      el.style.display = '';
+      el.style.removeProperty('display');
+    });
   }
 
   // Load profile
@@ -548,9 +558,45 @@ async function initApp(user) {
   fillPerfilForm(_perfil);
   updateProgress(_perfil);
 
+  // Sync any pending localStorage diagnosticos
+  await syncPendingDiagnosticos(user.id);
+
   // Show app
   hideGate();
   loadInicioDash();
+}
+
+async function syncPendingDiagnosticos(userId) {
+  try {
+    var pending = JSON.parse(localStorage.getItem('finexo_pending') || '[]');
+    if(!pending.length) return;
+    console.log('Syncing', pending.length, 'pending diagnosticos...');
+    for(var i=0; i<pending.length; i++) {
+      var p = pending[i];
+      var result = await _supa.from('diagnosticos').insert({
+        user_id: userId,
+        nombre: p.nombre||'',
+        telefono: p.telefono||'',
+        email_cliente: p.email||'',
+        situacion: p.situacion||'',
+        deudas: p.deudas||'',
+        ingresos: p.ingresos||'',
+        gastos_fijos: p.gastos_fijos||'',
+        gastos_variables: p.gastos_variables||'',
+        flujo_libre: p.flujo_libre||'',
+        objetivo: p.objetivo||''
+      });
+      if(result.error) {
+        console.error('Sync error:', result.error.message);
+      } else {
+        console.log('Synced pending diagnostico ✓');
+      }
+    }
+    localStorage.removeItem('finexo_pending');
+    console.log('All pending synced and cleared');
+  } catch(e) {
+    console.error('Sync exception:', e.message);
+  }
 }
 
 function showGate() {
