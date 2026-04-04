@@ -362,6 +362,11 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
 .auth-uname strong{color:var(--green-light);}
 .auth-out{background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;}
 .auth-out:hover{border-color:rgba(231,76,60,0.4);color:#E74C3C;}
+
+/* PORTAL BUTTON NAV */
+.nav-portal{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;text-decoration:none;font-family:'Outfit',sans-serif;}
+.nav-portal:hover{border-color:rgba(58,125,68,0.4);color:var(--green-light);}
+.nav-portal-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--green),#2A5C32);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--white);flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -377,6 +382,12 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
     
     <li><a href="#contacto">Contacto</a></li>
     <li><a href="#" class="nav-cta" onclick="openAgent(event)">Diagnóstico Gratuito</a></li>
+    <li id="navPortalBtn" style="display:none">
+      <a href="dashboard.html" class="nav-portal">
+        <div class="nav-portal-avatar" id="navAvatarLetter">?</div>
+        <span id="navPortalName">Mi Portal</span>
+      </a>
+    </li>
   </ul>
   <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
 </nav>
@@ -388,6 +399,7 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
   
   <a href="#contacto" onclick="toggleMenu()">Contacto</a>
   <a href="#" onclick="toggleMenu();openAgent(event);" style="color:var(--green-light);font-weight:700;">Diagnóstico Gratuito</a>
+  <a href="dashboard.html" id="mobilePortalBtn" style="display:none;color:rgba(255,255,255,0.7)" onclick="toggleMenu()">Mi Portal →</a>
 </div>
 
 <!-- HERO -->
@@ -1053,17 +1065,33 @@ document.addEventListener('DOMContentLoaded', function() {
 function _onLogin(user) {
   _user = user;
   var name = (user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name : user.email;
+  var shortName = name.split(' ')[0];
+  // User bar
   document.getElementById('authUname').textContent = name;
   document.getElementById('authUbar').classList.add('on');
   document.getElementById('authModal').classList.remove('open');
   document.getElementById('navbar').style.top = '44px';
   document.body.style.overflow = '';
+  // Portal button in nav
+  var portalBtn = document.getElementById('navPortalBtn');
+  if(portalBtn) portalBtn.style.display = 'block';
+  var avatarLetter = document.getElementById('navAvatarLetter');
+  if(avatarLetter) avatarLetter.textContent = shortName.charAt(0).toUpperCase();
+  var portalName = document.getElementById('navPortalName');
+  if(portalName) portalName.textContent = shortName;
+  // Mobile portal button
+  var mobileBtn = document.getElementById('mobilePortalBtn');
+  if(mobileBtn) mobileBtn.style.display = 'block';
 }
 
 function _onLogout() {
   _user = null;
   document.getElementById('authUbar').classList.remove('on');
   document.getElementById('navbar').style.top = '0';
+  var portalBtn = document.getElementById('navPortalBtn');
+  if(portalBtn) portalBtn.style.display = 'none';
+  var mobileBtn = document.getElementById('mobilePortalBtn');
+  if(mobileBtn) mobileBtn.style.display = 'none';
 }
 
 function openAuthModal() {
