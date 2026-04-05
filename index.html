@@ -381,7 +381,7 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
     <li><a href="#sobre">Nosotros</a></li>
     
     <li><a href="#contacto">Contacto</a></li>
-    <li><a href="#" class="nav-cta" onclick="openAgent(event)">Diagnóstico Gratuito</a></li>
+    <li id="navLoginBtn"><a href="#" class="nav-cta" onclick="openAuthModal(event)">Iniciar sesi&#243;n</a></li>
     <li id="navPortalBtn" style="display:none">
       <a href="dashboard.html" class="nav-portal">
         <div class="nav-portal-avatar" id="navAvatarLetter">?</div>
@@ -398,8 +398,8 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
   <a href="#sobre" onclick="toggleMenu()">Nosotros</a>
   
   <a href="#contacto" onclick="toggleMenu()">Contacto</a>
-  <a href="#" onclick="toggleMenu();openAgent(event);" style="color:var(--green-light);font-weight:700;">Diagnóstico Gratuito</a>
-  <a href="dashboard.html" id="mobilePortalBtn" style="display:none;color:rgba(255,255,255,0.7)" onclick="toggleMenu()">Mi Portal →</a>
+  <a href="#" id="mobilLoginBtn" onclick="toggleMenu();openAuthModal(event);" style="color:var(--green-light);font-weight:700;">Iniciar sesi&#243;n</a>
+  <a href="dashboard.html" id="mobilePortalBtn" style="display:none;color:rgba(255,255,255,0.7)" onclick="toggleMenu()">Mi Portal &#8594;</a>
 </div>
 
 <!-- HERO -->
@@ -411,7 +411,7 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
     <h1 class="hero-title">Tu situación financiera<br><span>tiene solución.</span></h1>
     <p class="hero-sub">Estructuración de Crédito y Capital Privado. Asesoría especializada en reestructuración de deudas para personas y empresas en República Dominicana.</p>
     <div class="hero-actions">
-      <a href="#" class="btn-primary" onclick="openAgent(event)">
+      <a href="dashboard.html" class="btn-primary">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
         Iniciar Diagnóstico
       </a>
@@ -524,7 +524,7 @@ footer{background:#060F1C;border-top:1px solid rgba(255,255,255,0.06);padding:48
         <div class="cinfo-icon">✉️</div>
         <div><div class="cinfo-label">Email</div><div class="cinfo-val"><span class="__cf_email__" data-cfemail="731a1d151c33151a1d160b1c5d171c">[email&#160;protected]</span></div></div>
       </a>
-      <a href="#" class="cinfo-item" onclick="openAgent(event)">
+      <a href="dashboard.html" class="cinfo-item">
         <div class="cinfo-icon">🤖</div>
         <div><div class="cinfo-label">Diagnóstico IA</div><div class="cinfo-val">Disponible 24/7 — Gratis</div></div>
       </a>
@@ -1076,35 +1076,41 @@ function _onLogin(user) {
   _user = user;
   var name = (user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name : user.email;
   var shortName = name.split(' ')[0];
-  // User bar
   document.getElementById('authUname').textContent = name;
   document.getElementById('authUbar').classList.add('on');
   document.getElementById('authModal').classList.remove('open');
   document.getElementById('navbar').style.top = '44px';
   document.body.style.overflow = '';
-  // Portal button in nav
+  // Hide login btn, show portal btn
+  var loginBtn = document.getElementById('navLoginBtn');
+  if(loginBtn) loginBtn.style.display = 'none';
   var portalBtn = document.getElementById('navPortalBtn');
   if(portalBtn) portalBtn.style.display = 'block';
   var avatarLetter = document.getElementById('navAvatarLetter');
   if(avatarLetter) avatarLetter.textContent = shortName.charAt(0).toUpperCase();
   var portalName = document.getElementById('navPortalName');
   if(portalName) portalName.textContent = shortName;
-  // Mobile portal button
-  var mobileBtn = document.getElementById('mobilePortalBtn');
-  if(mobileBtn) mobileBtn.style.display = 'block';
+  var mobilePortal = document.getElementById('mobilePortalBtn');
+  if(mobilePortal) mobilePortal.style.display = 'block';
+  var mobileLogin = document.getElementById('mobilLoginBtn');
+  if(mobileLogin) mobileLogin.style.display = 'none';
 }
 
 function _onLogout() {
   _user = null;
   document.getElementById('authUbar').classList.remove('on');
   document.getElementById('navbar').style.top = '0';
+  var loginBtn = document.getElementById('navLoginBtn');
+  if(loginBtn) loginBtn.style.display = 'block';
   var portalBtn = document.getElementById('navPortalBtn');
   if(portalBtn) portalBtn.style.display = 'none';
-  var mobileBtn = document.getElementById('mobilePortalBtn');
-  if(mobileBtn) mobileBtn.style.display = 'none';
+  var mobileLogin = document.getElementById('mobilLoginBtn');
+  if(mobileLogin) mobileLogin.style.display = 'block';
+  var mobilePortal = document.getElementById('mobilePortalBtn');
+  if(mobilePortal) mobilePortal.style.display = 'none';
 }
 
-function openAuthModal() {
+function openAuthModal(e) { if(e) e.preventDefault();
   document.getElementById('authModal').classList.add('open');
   document.body.style.overflow = 'hidden';
   _setMsg('','');
