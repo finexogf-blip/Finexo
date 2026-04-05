@@ -1060,120 +1060,35 @@ async function doLogout() {
 }
 
 function _saveToSupabase(payload) {
-  // Save to localStorage - dashboard will sync to Supabase when opened
-  try {
-    var pending = JSON.parse(localStorage.getItem('finexo_pending') || '[]');
-    payload._saved_at = new Date().toISOString();
-    payload._user_id = _user ? _user.id : null;
-    pending.push(payload);
-    localStorage.setItem('finexo_pending', JSON.stringify(pending));
-    console.log('Saved to localStorage, pending:', pending.length);
-  } catch(e) {
-    console.error('localStorage error:', e.message);
+  if(!_supa || !_user) {
+    console.warn('No active session');
+    return;
   }
-  
-  // Also try direct Supabase insert if session exists
-  if(_supa && _user) {
-    _supa.from('diagnosticos').insert({
-      user_id: _user.id,
-      nombre: payload.nombre,
-      telefono: payload.telefono,
-      email_cliente: payload.email||'',
-      situacion: payload.situacion,
-      deudas: payload.deudas,
-      ingresos: payload.ingresos,
-      gastos_fijos: payload.gastos_fijos,
-      gastos_variables: payload.gastos_variables,
-      flujo_libre: payload.flujo_libre,
-      objetivo: payload.objetivo
-    }).then(function(result) {
-      if(!result.error) {
-        // Clear pending since it was saved
-        localStorage.removeItem('finexo_pending');
-        console.log('Direct Supabase save OK');
-      }
-    }).catch(function(e){ console.error('Direct save error:', e); });
-  }
+  _supa.from('diagnosticos').insert({
+    user_id: _user.id,
+    nombre: payload.nombre,
+    telefono: payload.telefono,
+    email_cliente: payload.email||'',
+    situacion: payload.situacion,
+    deudas: payload.deudas,
+    ingresos: payload.ingresos,
+    gastos_fijos: payload.gastos_fijos,
+    gastos_variables: payload.gastos_variables,
+    flujo_libre: payload.flujo_libre,
+    objetivo: payload.objetivo
+  }).then(function(result) {
+    if(result.error) {
+      console.error('Save error:', result.error.message);
+    } else {
+      console.log('Saved to Supabase OK');
+      setTimeout(function(){ loadInicio(); }, 600);
+    }
+  });
 }
 
 </script>
 
 
-<!-- TERMS & CONDITIONS MODAL -->
-<div class="tc-overlay" id="tcModal">
-  <div class="tc-box">
-    <div class="tc-header">
-      <div>
-        <div class="tc-header-title">Términos y Condiciones</div>
-        <div class="tc-header-sub">Finexo Advisory · República Dominicana</div>
-      </div>
-      <button class="tc-close" onclick="closeTC()">✕</button>
-    </div>
-    <div class="tc-body">
-      <div class="tc-warning"><strong>Aviso importante:</strong> El uso de los servicios de Finexo Advisory implica la aceptación plena de los presentes Términos y Condiciones.</div>
-      <h2>1. Identificación y Naturaleza del Servicio</h2>
-      <p>Finexo Advisory es una firma de consultoría financiera independiente domiciliada en la República Dominicana. <strong>No es una entidad financiera, banco, cooperativa, ni entidad regulada por la Junta Monetaria o la Superintendencia de Bancos.</strong></p>
-      <h2>2. Alcance de los Servicios</h2>
-      <p>Los servicios comprenden diagnóstico financiero, planes de reestructuración, asesoría estratégica y consultoría en estructuración de capital privado. <strong>Finexo Advisory no actúa como representante legal del cliente ni garantiza resultados específicos.</strong></p>
-      <h2>3. Limitación de Responsabilidad</h2>
-      <p>Finexo Advisory no asume responsabilidad por decisiones del cliente, resultados de negociaciones con terceros, ni por inexactitudes en información suministrada. La responsabilidad total no excederá el monto pagado por el servicio.</p>
-      <h2>4. Obligaciones del Cliente</h2>
-      <p>El cliente se compromete a suministrar información veraz y completa, no utilizar los servicios para fines ilícitos, y cumplir con los compromisos de pago acordados.</p>
-      <h2>5. Confidencialidad y Protección de Datos</h2>
-      <p>Toda información del cliente es tratada con absoluta confidencialidad y no será divulgada a terceros sin consentimiento expreso, salvo requerimiento de autoridad judicial competente.</p>
-      <h2>6. Honorarios y Política de Pagos</h2>
-      <p>Los honorarios son los acordados antes del inicio de cada servicio. Una vez iniciado, no proceden reembolsos totales. En desistimiento previo aplica cargo administrativo del 20%.</p>
-      <h2>7. Propiedad Intelectual</h2>
-      <p>Todos los informes, metodologías y herramientas son propiedad exclusiva de Finexo Advisory y están protegidos por las leyes dominicanas de propiedad intelectual.</p>
-      <h2>8. Uso del Agente de Inteligencia Artificial</h2>
-      <p>El agente de IA tiene carácter orientativo y no constituye asesoría financiera definitiva. Todo diagnóstico es revisado por un asesor humano calificado.</p>
-      <h2>9. Independencia Profesional</h2>
-      <p>Finexo Advisory opera con total independencia y no percibe comisiones de terceros por sus recomendaciones.</p>
-      <h2>10. Modificaciones</h2>
-      <p>Finexo Advisory se reserva el derecho de modificar estos Términos. El uso continuado implica aceptación de los cambios.</p>
-      <h2>11. Legislación Aplicable y Jurisdicción</h2>
-      <p>Estos Términos se rigen por las leyes de la República Dominicana. Las partes se someten a los tribunales del Distrito Nacional.</p>
-      <h2>12. Contacto</h2>
-      <p>Para consultas, comuníquese a través de los canales oficiales disponibles en este sitio web.</p>
-      <div class="tc-date">Última actualización: Marzo 2025 · Finexo Advisory · República Dominicana</div>
-    </div>
-  </div>
-</div>
-
-<!-- AUTH MODAL -->
-<div class="auth-overlay" id="authModal">
-  <div class="auth-box">
-    <div class="auth-hdr">
-      <div class="auth-logo">Finexo<span> Advisory</span></div>
-      <div class="auth-logo-sub">Área del Cliente · Acceso Seguro</div>
-    </div>
-    <div class="auth-bdy">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabA" onclick="authTab(0)">Iniciar sesión</button>
-        <button class="auth-tab" id="tabB" onclick="authTab(1)">Crear cuenta</button>
-      </div>
-      <div id="authFrmLogin">
-        <div class="auth-fld"><label>Email</label><input type="email" id="aEmail" placeholder="correo@ejemplo.com"></div>
-        <div class="auth-fld"><label>Contraseña</label><input type="password" id="aPass" placeholder="••••••••"></div>
-        <button class="auth-submit" id="aBtnLogin" onclick="doLogin()">Entrar</button>
-        <div class="auth-link">¿Olvidaste tu contraseña? <a onclick="doReset()" style="cursor:pointer">Recuperar</a></div>
-      </div>
-      <div id="authFrmSignup" style="display:none">
-        <div class="auth-fld"><label>Nombre completo</label><input type="text" id="aName" placeholder="Juan García"></div>
-        <div class="auth-fld"><label>Email</label><input type="email" id="aEmailS" placeholder="correo@ejemplo.com"></div>
-        <div class="auth-fld"><label>Contraseña</label><input type="password" id="aPassS" placeholder="Mínimo 6 caracteres"></div>
-        <button class="auth-submit" id="aBtnSignup" onclick="doSignup()">Crear cuenta</button>
-      </div>
-      <div class="auth-msg" id="authMsg"></div>
-    </div>
-  </div>
-</div>
-
-<!-- USER BAR -->
-<div class="auth-ubar" id="authUbar">
-  <div class="auth-uname">Bienvenido, <strong id="authUname">Usuario</strong></div>
-  <button class="auth-out" onclick="doLogout()">Cerrar sesión</button>
-</div>
 
 
 <script>
