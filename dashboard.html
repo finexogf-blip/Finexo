@@ -918,7 +918,13 @@ function renderDetailHTML(item, isAdmin) {
   rows.forEach(function(r) {
     html += '<div class="detail-row"><div class="detail-lbl">'+r[0]+'</div><div class="detail-val">'+r[1]+'</div></div>';
   });
-  if(item.analisis_ia) {
+  // Client sees brief analysis, admin sees full IA analysis
+  if(!isAdmin && item.analisis_cliente) {
+    html += '<div class="detail-row" style="background:rgba(58,125,68,0.05);border-color:rgba(58,125,68,0.2)"><div class="detail-lbl">An&#225;lisis preliminar</div><div class="detail-val" style="font-size:13px;line-height:1.7">'+item.analisis_cliente+'</div></div>';
+  } else if(!isAdmin) {
+    html += '<div class="detail-row"><div class="detail-lbl">An&#225;lisis</div><div class="detail-val" style="color:rgba(255,255,255,0.4)">En preparaci&#243;n...</div></div>';
+  }
+  if(isAdmin && item.analisis_ia) {
     html += '<div class="detail-row"><div class="detail-lbl">An&#225;lisis IA</div><div class="detail-val" style="white-space:pre-wrap;font-size:12px;line-height:1.7">'+item.analisis_ia+'</div></div>';
   }
   if(isAdmin) {
@@ -1056,13 +1062,14 @@ document.addEventListener('click', function(e) { if(e.target.id === 'detailModal
 </script>
 
 <script>
+
 function _saveToSupabase(payload) {
   showDiagDone();
   if(!_supa || !_user) return;
   _supa.from('diagnosticos').insert({
     user_id: _user.id,
     nombre: payload.nombre,
-    telefono: payload.telefono,
+    telefono: payload.telefono||'',
     email_cliente: payload.email||'',
     situacion: payload.situacion,
     deudas: payload.deudas,
@@ -1070,25 +1077,18 @@ function _saveToSupabase(payload) {
     gastos_fijos: payload.gastos_fijos,
     gastos_variables: payload.gastos_variables,
     flujo_libre: payload.flujo_libre,
-    objetivo: payload.objetivo
+    objetivo: payload.objetivo,
+    moneda: payload.moneda||'RD$',
+    analisis_cliente: payload.analisis_cliente||''
   }).then(function(result) {
     var el = document.getElementById('diagSaveStatus');
     if(result.error) {
-      if(el) { el.textContent='Error al guardar: '+result.error.message; el.style.color='#E74C3C'; el.style.display='block'; }
+      if(el){el.textContent='Error: '+result.error.message;el.style.color='#E74C3C';el.style.display='block';}
     } else {
-      if(el) { el.textContent='\u2713 Guardado en tu portal'; el.style.color='var(--green-light)'; el.style.display='block'; }
+      if(el){el.textContent='\u2713 Guardado en tu portal';el.style.color='var(--green-light)';el.style.display='block';}
       setTimeout(function(){ loadInicio(); }, 1500);
     }
   });
-}
-
-function _showSaveStatus(msg, ok) {
-  var el = document.getElementById('diagSaveStatus');
-  if(el) {
-    el.textContent = msg;
-    el.style.color = ok ? 'var(--green-light)' : '#E74C3C';
-    el.style.display = 'block';
-  }
 }
 
 // ── FINEXO DIAGNOSTIC FORM ──
@@ -1096,25 +1096,58 @@ var WEB3_KEY = 'f5915135-ea41-4c92-9b27-4b6a515b22b5';
 var CF_WORKER = 'https://square-frog-0e47.finexo-gf.workers.dev';
 
 var diagData = {
-  nombre:'', situacion:[], deudas:[], ingresos:[],
+  moneda:'RD$', situacion:[], deudas:[], ingresos:[],
   gastos_fijos:[], gastos_variables:[],
-  objetivo:'', contacto_nombre:'', contacto_tel:'', contacto_email:''
+  objetivo:'', contacto_tel:''
 };
 var selEstado='', tipoIngr='', frecIngr='';
 
-// openAgent handled by dashboard openDiag()
+function _getUser() {
+  if(!_user) return {nombre:'', email:''};
+  var name = (_user.user_metadata && _user.user_metadata.full_name) ? _user.user_metadata.full_name : _user.email.split('@')[0];
+  return {nombre: name, email: _user.email};
+}
+
+function openDiag(e) {
+  if(e) e.preventDefault();
+  var u = _getUser();
+  diagData = {
+    moneda:'RD$', situacion:[], deudas:[], ingresos:[],
+    gastos_fijos:[], gastos_variables:[],
+    objetivo:'', contacto_tel:'',
+    contacto_nombre: u.nombre, contacto_email: u.email
+  };
+  selEstado=''; tipoIngr=''; frecIngr='';
+  document.getElementById('agentModal').classList.add('open');
+  document.body.style.overflow='hidden';
+  renderStep(0);
+}
 function closeAgent(){ document.getElementById('agentModal').classList.remove('open'); document.body.style.overflow=''; }
-function closeAdvisor(){ document.getElementById('advPanel').classList.remove('open'); document.body.style.overflow=''; }
-function openAdvisor(){ document.getElementById('agentModal').classList.remove('open'); document.getElementById('advPanel').classList.add('open'); document.body.style.overflow='hidden'; window.scrollTo({top:0}); }
+function closeAdvisor(){ var el=document.getElementById('advPanel'); if(el) el.style.display='none'; document.body.style.overflow=''; }
 function openTC(){ document.getElementById('tcModal').classList.add('open'); document.body.style.overflow='hidden'; }
 function closeTC(){ document.getElementById('tcModal').classList.remove('open'); document.body.style.overflow=''; }
 
-function setProgress(s){
-  var pct=Math.min(Math.round((s/7)*100),100);
-  document.getElementById('diagProgress').style.width=pct+'%';
-  document.getElementById('diagProgressLabel').textContent=s<7?'Paso '+(s+1)+' de 7':'Completado';
+function fmtNum(n) {
+  var num = parseFloat(String(n).replace(/,/g,''))||0;
+  return num.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
 }
-function renderStep(s){ setProgress(s); var c=document.getElementById('diagForm'); [renderNombre,renderSituacion,renderDeudas,renderIngresos,renderGastos,renderObjetivo,renderContacto,renderResumen][s](c); }
+function parseMonto(s) { return parseFloat(String(s).replace(/[^0-9.]/g,''))||0; }
+
+function setProgress(s){
+  var pct=Math.min(Math.round((s/6)*100),100);
+  var fill=document.getElementById('diagProgress');
+  var lbl=document.getElementById('diagProgressLabel');
+  if(fill) fill.style.width=pct+'%';
+  if(lbl) lbl.textContent=s<6?'Paso '+(s+1)+' de 6':'Completado';
+}
+
+function renderStep(s){
+  setProgress(s);
+  var c=document.getElementById('diagForm');
+  if(!c) return;
+  var steps=[renderMoneda,renderSituacion,renderDeudas,renderIngresos,renderGastos,renderObjetivo,renderContacto,renderResumen];
+  if(steps[s]) steps[s](c);
+}
 
 function mkNav(back,fn,lbl){
   var b=back>=0?'<button class="diag-back" onclick="renderStep('+back+')">&#8592; Atr&#225;s</button>':'<div></div>';
@@ -1124,49 +1157,93 @@ function mkStep(q,hint,body,back,fn,lbl){
   return '<div class="diag-step"><div class="diag-question">'+q+'</div><div class="diag-hint">'+hint+'</div>'+body+mkNav(back,fn,lbl)+'</div>';
 }
 
-// STEP 0
-function renderNombre(c){
-  c.innerHTML=mkStep('&#191;Cu&#225;l es tu nombre?','As&#237; personalizamos tu diagn&#243;stico.',
-    '<input class="diag-input" id="iNom" placeholder="Ej: Juan Garc&#237;a" value="'+diagData.nombre+'" oninput="diagData.nombre=this.value">',
-    -1,'nextN()');
-  setTimeout(function(){var el=document.getElementById('iNom');if(el)el.focus();},80);
+// STEP 0 - Moneda
+function renderMoneda(c){
+  var u=_getUser();
+  var html='<div style="text-align:center;padding:20px 0 10px">';
+  html+='<div style="font-size:40px;margin-bottom:8px">&#x1F44B;</div>';
+  html+='<div style="font-size:16px;color:var(--white);margin-bottom:4px">Hola, <strong>'+u.nombre+'</strong></div>';
+  html+='<div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px">Completemos tu diagn&#243;stico financiero</div>';
+  html+='</div>';
+  html+='<div class="diag-label" style="margin-bottom:8px">&#191;En qu&#233; moneda manejas tus finanzas?</div>';
+  html+='<div class="diag-options" style="justify-content:center">';
+  html+='<button class="diag-opt'+(diagData.moneda==='RD$'?' selected':'')+'" onclick="selMoneda(0,this)" style="min-width:120px;font-size:16px;font-weight:700">&#x1F1E9;&#x1F1F4; RD$</button>';
+  html+='<button class="diag-opt'+(diagData.moneda==='US$'?' selected':'')+'" onclick="selMoneda(1,this)" style="min-width:120px;font-size:16px;font-weight:700">&#x1F1FA;&#x1F1F8; US$</button>';
+  html+='</div>';
+  c.innerHTML=mkStep('Bienvenido a tu diagn&#243;stico','Todo lo que ingreses es confidencial y protegido.',html,-1,'nextMoneda()');
 }
-function nextN(){ if(!diagData.nombre.trim()){alert('Por favor ingresa tu nombre');return;} renderStep(1); }
+var _monedas=['RD$','US$'];
+function selMoneda(idx,el){
+  diagData.moneda=_monedas[idx];
+  document.querySelectorAll('#diagForm .diag-opt').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected');
+}
+function nextMoneda(){ renderStep(1); }
 
-// STEP 1
+// STEP 1 - Situacion
 var _sitOpts=['Tengo deudas dif&#237;ciles de pagar','Mis cuotas son muy altas','Estoy en mora con acreedores','Quiero consolidar mis deudas','Necesito mejorar mi historial crediticio','Busco financiamiento nuevo','Mi empresa tiene problemas financieros','Quiero estructurar capital privado'];
 function renderSituacion(c){
+  var u=_getUser();
   var html='<div class="diag-options">';
   for(var i=0;i<_sitOpts.length;i++){
     var sel=diagData.situacion.indexOf(_sitOpts[i])!==-1?' selected':'';
     html+='<button class="diag-opt'+sel+'" onclick="toggleSit('+i+',this)">'+_sitOpts[i]+'</button>';
   }
   html+='</div>';
-  c.innerHTML=mkStep(diagData.nombre+', &#191;cu&#225;l es tu situaci&#243;n?','Puedes seleccionar m&#225;s de una.',html,0,'nextSit()');
+  c.innerHTML=mkStep(u.nombre.split(' ')[0]+', &#191;cu&#225;l es tu situaci&#243;n?','Puedes seleccionar m&#225;s de una.',html,0,'nextSit()');
 }
 function toggleSit(idx,el){
-  var v=_sitOpts[idx]; var i=diagData.situacion.indexOf(v);
+  var v=_sitOpts[idx];var i=diagData.situacion.indexOf(v);
   if(i===-1){diagData.situacion.push(v);el.classList.add('selected');}
   else{diagData.situacion.splice(i,1);el.classList.remove('selected');}
 }
 function nextSit(){ if(!diagData.situacion.length){alert('Selecciona al menos una opci&#243;n');return;} renderStep(2); }
 
-// STEP 2
+// STEP 2 - Deudas
+var _tipoDeuda=['Pr&#233;stamo personal','Tarjeta de cr&#233;dito','Hipoteca','Veh&#237;culo','Pr&#233;stamo empresarial','Otro'];
 function renderDeudas(c){
+  var sym=diagData.moneda;
   var html='';
   for(var i=0;i<diagData.deudas.length;i++){
     var d=diagData.deudas[i];
-    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+d.acreedor+'</strong> &#8212; RD$'+Number(d.monto).toLocaleString()+'<span>Cuota: RD$'+Number(d.cuota_mensual||0).toLocaleString()+' &#183; '+d.estado+'</span></div><button class="diag-debt-remove" onclick="removeDebt('+i+')">&#x2715;</button></div>';
+    var esTC=d.tipo==='Tarjeta de cr&#233;dito';
+    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+d.acreedor+'</strong> ('+d.tipo+') &#8212; '+sym+' '+fmtNum(d.monto)+'<span>Cuota: '+sym+' '+fmtNum(d.cuota_mensual||0)+' &#183; '+d.estado+'</span></div><button class="diag-debt-remove" onclick="removeDebt('+i+')">&#x2715;</button></div>';
   }
-  var aSel=selEstado==='al dia'?' selected':'';
-  var mSel=selEstado==='en mora'?' selected':'';
-  html+='<div class="diag-label">Acreedor</div><input class="diag-input" id="dA" placeholder="Ej: Banco Popular...">';
-  html+='<div class="diag-input-row"><div><div class="diag-label">Monto total (RD$)</div><input class="diag-input" id="dM" type="number" placeholder="150000"></div><div><div class="diag-label">Cuota mensual (RD$)</div><input class="diag-input" id="dC" type="number" placeholder="8500"></div></div>';
-  html+='<div class="diag-input-row"><div><div class="diag-label">Tasa de inter&#233;s</div><input class="diag-input" id="dT" placeholder="Ej: 28% anual"></div><div><div class="diag-label">Tiempo restante</div><input class="diag-input" id="dTi" placeholder="Ej: 24 meses"></div></div>';
+  var tipoOpts='';
+  for(var t=0;t<_tipoDeuda.length;t++){
+    tipoOpts+='<option value="'+_tipoDeuda[t]+'">'+_tipoDeuda[t]+'</option>';
+  }
+  html+='<div class="diag-label">Tipo de deuda</div>';
+  html+='<select class="diag-input" id="dTipo" onchange="toggleTCFields()" style="margin-bottom:10px"><option value="">Selecciona...</option>'+tipoOpts+'</select>';
+  html+='<div class="diag-label">Acreedor / Entidad</div>';
+  html+='<input class="diag-input" id="dA" placeholder="Ej: Banco Popular, VISA...">';
+  html+='<div class="diag-input-row">';
+  html+='<div><div class="diag-label">'+sym+' Monto total</div><input class="diag-input" id="dM" type="number" inputmode="decimal" placeholder="150,000" style="font-size:16px;padding:14px"></div>';
+  html+='<div><div class="diag-label">'+sym+' Cuota mensual</div><input class="diag-input" id="dC" type="number" inputmode="decimal" placeholder="8,500" style="font-size:16px;padding:14px"></div>';
+  html+='</div>';
+  // TC specific fields
+  html+='<div id="tcFields" style="display:none">';
+  html+='<div class="diag-input-row">';
+  html+='<div><div class="diag-label">'+sym+' L&#237;mite de cr&#233;dito</div><input class="diag-input" id="dLimite" type="number" inputmode="decimal" placeholder="50,000" style="font-size:16px;padding:14px"></div>';
+  html+='<div><div class="diag-label">'+sym+' Balance actual</div><input class="diag-input" id="dBalance" type="number" inputmode="decimal" placeholder="35,000" style="font-size:16px;padding:14px"></div>';
+  html+='</div>';
+  html+='</div>';
+  html+='<div class="diag-input-row">';
+  html+='<div><div class="diag-label">Tasa de inter&#233;s</div><input class="diag-input" id="dT" placeholder="Ej: 28% anual"></div>';
+  html+='<div><div class="diag-label">Tiempo restante</div><input class="diag-input" id="dTi" placeholder="Ej: 24 meses"></div>';
+  html+='</div>';
   html+='<div class="diag-label" style="margin-bottom:8px">Estado</div>';
-  html+='<div class="diag-options"><button class="diag-opt'+aSel+'" id="bAlDia" onclick="setEst(0)">&#x2705; Al d&#237;a</button><button class="diag-opt'+mSel+'" id="bMora" onclick="setEst(1)">&#x26A0;&#xFE0F; En mora</button></div>';
+  html+='<div class="diag-options">';
+  html+='<button class="diag-opt'+(selEstado==='al dia'?' selected':'')+'" id="bAlDia" onclick="setEst(0)">&#x2705; Al d&#237;a</button>';
+  html+='<button class="diag-opt'+(selEstado==='en mora'?' selected':'')+'" id="bMora" onclick="setEst(1)">&#x26A0;&#xFE0F; En mora</button>';
+  html+='</div>';
   html+='<button class="diag-add-btn" onclick="addDebt()">+ Agregar esta deuda</button>';
-  c.innerHTML=mkStep('&#191;Cu&#225;les son tus deudas?','Agrega cada deuda. Puedes continuar sin agregar.',html,1,'renderStep(3)',diagData.deudas.length?'Continuar &#8594;':'Omitir &#8594;');
+  c.innerHTML=mkStep('&#191;Cu&#225;les son tus deudas?','Agrega cada deuda por separado.',html,1,'renderStep(3)',diagData.deudas.length?'Continuar &#8594;':'Omitir &#8594;');
+}
+function toggleTCFields(){
+  var t=(document.getElementById('dTipo')||{}).value||'';
+  var tc=document.getElementById('tcFields');
+  if(tc) tc.style.display=(t==='Tarjeta de cr&#233;dito')?'block':'none';
 }
 function setEst(n){
   selEstado=n===0?'al dia':'en mora';
@@ -1174,26 +1251,33 @@ function setEst(n){
   if(a&&b){a.classList.remove('selected');b.classList.remove('selected');if(n===0)a.classList.add('selected');else b.classList.add('selected');}
 }
 function addDebt(){
+  var tipo=(document.getElementById('dTipo')||{}).value||'';
   var a=(document.getElementById('dA')||{}).value||'';
   var m=(document.getElementById('dM')||{}).value||'';
   var cu=(document.getElementById('dC')||{}).value||'0';
   var t=(document.getElementById('dT')||{}).value||'N/D';
   var ti=(document.getElementById('dTi')||{}).value||'N/D';
+  var limite=(document.getElementById('dLimite')||{}).value||'';
+  var balance=(document.getElementById('dBalance')||{}).value||'';
+  if(!tipo){alert('Selecciona el tipo de deuda');return;}
   if(!a||!m){alert('Ingresa el acreedor y el monto');return;}
   if(!selEstado){alert('Indica si est&#225; al d&#237;a o en mora');return;}
-  diagData.deudas.push({acreedor:a,monto:m,cuota_mensual:cu,tasa:t,tiempo_restante:ti,estado:selEstado});
+  var deuda={tipo:tipo,acreedor:a,monto:m,cuota_mensual:cu,tasa:t,tiempo_restante:ti,estado:selEstado};
+  if(tipo==='Tarjeta de cr&#233;dito'){deuda.limite=limite;deuda.balance=balance;}
+  diagData.deudas.push(deuda);
   selEstado=''; renderDeudas(document.getElementById('diagForm'));
 }
 function removeDebt(i){ diagData.deudas.splice(i,1); renderDeudas(document.getElementById('diagForm')); }
 
-// STEP 3
+// STEP 3 - Ingresos
 var _tipoOpts=['Salario','Negocio propio','Renta / alquiler','Remesas','Freelance','Otro'];
 var _frecOpts=['Semanal','Quincenal','Mensual'];
 function renderIngresos(c){
+  var sym=diagData.moneda;
   var html='';
   for(var i=0;i<diagData.ingresos.length;i++){
     var ing=diagData.ingresos[i];
-    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+ing.tipo+'</strong> &#8212; RD$'+Number(ing.monto).toLocaleString()+' '+ing.frecuencia+'<span>aprox. RD$'+Number(ing.mensualizado).toLocaleString()+'/mes</span></div><button class="diag-debt-remove" onclick="removeIngreso('+i+')">&#x2715;</button></div>';
+    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+ing.tipo+'</strong> &#8212; '+sym+' '+fmtNum(ing.monto)+' '+ing.frecuencia+'<span>aprox. '+sym+' '+fmtNum(ing.mensualizado)+'/mes</span></div><button class="diag-debt-remove" onclick="removeIngreso('+i+')">&#x2715;</button></div>';
   }
   html+='<div class="diag-options" id="tipoIngrOpts">';
   for(var j=0;j<_tipoOpts.length;j++){
@@ -1201,8 +1285,8 @@ function renderIngresos(c){
     html+='<button class="diag-opt'+tsel+'" onclick="selTipoIngr('+j+',this)">'+_tipoOpts[j]+'</button>';
   }
   html+='</div>';
-  html+='<div class="diag-input-row"><div><div class="diag-label">Monto (RD$)</div><input class="diag-input" id="iMonto" type="number" placeholder="40000" oninput="calcMens()"></div>';
-  html+='<div><div class="diag-label" style="margin-bottom:6px">Frecuencia</div><div style="display:flex;gap:6px">';
+  html+='<div class="diag-input-row"><div><div class="diag-label">'+sym+' Monto</div><input class="diag-input" id="iMonto" type="number" inputmode="decimal" placeholder="40,000" oninput="calcMens()" style="font-size:16px;padding:14px"></div>';
+  html+='<div><div class="diag-label" style="margin-bottom:6px">Frecuencia</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
   for(var k=0;k<_frecOpts.length;k++){
     var fsel=frecIngr===_frecOpts[k]?' selected':'';
     html+='<button class="diag-opt frec-opt'+fsel+'" onclick="selFrecIngr('+k+',this)">'+_frecOpts[k]+'</button>';
@@ -1211,8 +1295,8 @@ function renderIngresos(c){
   html+='<div id="mensualizado" style="font-size:12px;color:rgba(255,255,255,.4);margin:4px 0 12px"></div>';
   html+='<button class="diag-add-btn" onclick="addIngreso()">+ Agregar esta fuente</button>';
   var total=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
-  if(total) html+='<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white)">Total mensual: <strong>RD$'+total.toLocaleString()+'</strong></div>';
-  c.innerHTML=mkStep('&#191;Cu&#225;les son tus fuentes de ingreso?','Agrega cada fuente. Puedes continuar sin agregar.',html,2,'nextIngresos()',diagData.ingresos.length?'Continuar &#8594;':'Omitir &#8594;');
+  if(total) html+='<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white)">Total mensual: <strong>'+sym+' '+fmtNum(total)+'</strong></div>';
+  c.innerHTML=mkStep('&#191;Cu&#225;les son tus fuentes de ingreso?','Agrega cada fuente por separado.',html,2,'nextIngresos()',diagData.ingresos.length?'Continuar &#8594;':'Omitir &#8594;');
 }
 function selTipoIngr(idx,el){
   tipoIngr=_tipoOpts[idx];
@@ -1225,10 +1309,10 @@ function selFrecIngr(idx,el){
   el.classList.add('selected'); calcMens();
 }
 function calcMens(){
-  var m=Number((document.getElementById('iMonto')||{}).value)||0;
+  var m=parseMonto((document.getElementById('iMonto')||{}).value||'0');
   var f=frecIngr==='Semanal'?4.33:frecIngr==='Quincenal'?2:1;
   var el=document.getElementById('mensualizado');
-  if(el&&m&&frecIngr) el.textContent='&#8776; RD$'+Math.round(m*f).toLocaleString()+' mensuales';
+  if(el&&m&&frecIngr) el.textContent='\u2248 '+diagData.moneda+' '+fmtNum(Math.round(m*f))+' mensuales';
 }
 function addIngreso(){
   var m=(document.getElementById('iMonto')||{}).value||'';
@@ -1236,48 +1320,50 @@ function addIngreso(){
   if(!m){alert('Ingresa el monto');return;}
   if(!frecIngr){alert('Selecciona la frecuencia');return;}
   var factor=frecIngr==='Semanal'?4.33:frecIngr==='Quincenal'?2:1;
-  diagData.ingresos.push({tipo:tipoIngr,monto:m,frecuencia:frecIngr,mensualizado:Math.round(Number(m)*factor)});
+  diagData.ingresos.push({tipo:tipoIngr,monto:m,frecuencia:frecIngr,mensualizado:Math.round(parseMonto(m)*factor)});
   tipoIngr=''; frecIngr=''; renderIngresos(document.getElementById('diagForm'));
 }
 function removeIngreso(i){ diagData.ingresos.splice(i,1); renderIngresos(document.getElementById('diagForm')); }
 function nextIngresos(){ renderStep(4); }
 
-// STEP 4
+// STEP 4 - Gastos
 var _catF=['Vivienda (alquiler/hipoteca)','Veh&#237;culo (cuota/seguro)','Educaci&#243;n','Seguro m&#233;dico','Servicios (luz, agua, internet)','Otro fijo'];
 var _catV=['Alimentaci&#243;n','Transporte / gasolina','Entretenimiento','Ropa y calzado','Salud / medicamentos','Otro variable'];
 function renderGastos(c){
-  var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
-  var totalV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
-  var gfList='';
-  for(var i=0;i<diagData.gastos_fijos.length;i++){
-    var g=diagData.gastos_fijos[i];
-    gfList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+g.categoria+' &#8212; RD$'+Number(g.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto(0,'+i+')">&#x2715;</button></div>';
-  }
-  var gvList='';
-  for(var j=0;j<diagData.gastos_variables.length;j++){
-    var gv=diagData.gastos_variables[j];
-    gvList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+gv.categoria+' &#8212; RD$'+Number(gv.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto(1,'+j+')">&#x2715;</button></div>';
+  var sym=diagData.moneda;
+  var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+parseMonto(g.monto);},0);
+  var totalV=diagData.gastos_variables.reduce(function(s,g){return s+parseMonto(g.monto);},0);
+  function mkGastList(arr, tipo){
+    var h='';
+    for(var i=0;i<arr.length;i++){
+      h+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+arr[i].categoria+' &#8212; '+sym+' '+fmtNum(arr[i].monto)+'</div><button class="diag-debt-remove" onclick="removeGasto('+tipo+','+i+')">&#x2715;</button></div>';
+    }
+    return h;
   }
   var optF='<option value="">Categor&#237;a...</option>';
   for(var k=0;k<_catF.length;k++) optF+='<option>'+_catF[k]+'</option>';
   var optV='<option value="">Categor&#237;a...</option>';
   for(var l=0;l<_catV.length;l++) optV+='<option>'+_catV[l]+'</option>';
   var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+  // Fixed
   html+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">';
   html+='<div class="diag-label" style="color:var(--green-light);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Fijos</div>';
-  html+=gfList+'<select class="diag-input" id="gfCat" style="margin-bottom:8px;font-size:13px">'+optF+'</select>';
-  html+='<input class="diag-input" id="gfMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">';
+  html+=mkGastList(diagData.gastos_fijos, 0);
+  html+='<select class="diag-input" id="gfCat" style="margin-bottom:8px;font-size:14px">'+optF+'</select>';
+  html+='<input class="diag-input" id="gfMonto" type="number" inputmode="decimal" placeholder="'+sym+' Monto" style="margin-bottom:8px;font-size:16px;padding:14px;color:var(--white);background:rgba(255,255,255,0.1)">';
   html+='<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto(0)">+ Agregar</button>';
-  if(totalF) html+='<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalF.toLocaleString()+'</div>';
+  if(totalF) html+='<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: '+sym+' '+fmtNum(totalF)+'</div>';
   html+='</div>';
+  // Variable
   html+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">';
   html+='<div class="diag-label" style="color:var(--gold);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Variables</div>';
-  html+=gvList+'<select class="diag-input" id="gvCat" style="margin-bottom:8px;font-size:13px">'+optV+'</select>';
-  html+='<input class="diag-input" id="gvMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">';
+  html+=mkGastList(diagData.gastos_variables, 1);
+  html+='<select class="diag-input" id="gvCat" style="margin-bottom:8px;font-size:14px">'+optV+'</select>';
+  html+='<input class="diag-input" id="gvMonto" type="number" inputmode="decimal" placeholder="'+sym+' Monto" style="margin-bottom:8px;font-size:16px;padding:14px;color:var(--white);background:rgba(255,255,255,0.1)">';
   html+='<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto(1)">+ Agregar</button>';
-  if(totalV) html+='<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalV.toLocaleString()+'</div>';
+  if(totalV) html+='<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: '+sym+' '+fmtNum(totalV)+'</div>';
   html+='</div></div>';
-  if(totalF+totalV) html+='<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white);margin-top:12px">Total gastos: <strong>RD$'+(totalF+totalV).toLocaleString()+'</strong></div>';
+  if(totalF+totalV) html+='<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white);margin-top:12px">Total gastos: <strong>'+sym+' '+fmtNum(totalF+totalV)+'</strong></div>';
   c.innerHTML=mkStep('Tus gastos mensuales','Separar fijos de variables nos ayuda a identificar d&#243;nde hay espacio.',html,3,'nextGastos()',(diagData.gastos_fijos.length||diagData.gastos_variables.length)?'Continuar &#8594;':'Omitir &#8594;');
 }
 function addGasto(tipo){
@@ -1296,7 +1382,7 @@ function removeGasto(tipo,i){
 }
 function nextGastos(){ renderStep(5); }
 
-// STEP 5
+// STEP 5 - Objetivo
 var _objOpts=['Reducir mis cuotas mensuales','Salir de deudas completamente','Negociar con mis acreedores','Mejorar mi historial crediticio','Conseguir nuevo financiamiento','Reorganizar las finanzas de mi empresa'];
 function renderObjetivo(c){
   var html='<div class="diag-options">';
@@ -1314,110 +1400,126 @@ function selObjetivo(idx,el){
 }
 function nextObj(){ if(!diagData.objetivo){alert('Selecciona tu objetivo');return;} renderStep(6); }
 
-// STEP 6
+// STEP 6 - Contacto (heredado del login)
 function renderContacto(c){
-  var html='<div class="diag-label">Nombre completo</div><input class="diag-input" id="cN" placeholder="Juan Garc&#237;a" value="'+diagData.contacto_nombre+'">';
-  html+='<div class="diag-label" style="margin-top:10px">WhatsApp / Tel&#233;fono</div><input class="diag-input" id="cT" placeholder="+1 809 000 0000" value="'+diagData.contacto_tel+'">';
-  html+='<div class="diag-label" style="margin-top:10px">Email (opcional)</div><input class="diag-input" id="cE" placeholder="correo@ejemplo.com" value="'+diagData.contacto_email+'">';
-  c.innerHTML=mkStep('Para enviarte tu plan personalizado','Un asesor te contactar&#225; en menos de 24 horas.',html,5,'nextContacto()','Ver resumen &#8594;');
+  var u=_getUser();
+  var html='';
+  html+='<div style="background:rgba(58,125,68,0.08);border:1px solid rgba(58,125,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px">';
+  html+='<div style="color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Enviando como</div>';
+  html+='<strong style="color:var(--white)">'+u.nombre+'</strong> &nbsp;<span style="color:rgba(255,255,255,0.4)">'+u.email+'</span>';
+  html+='</div>';
+  html+='<div class="diag-label" style="margin-top:4px">Tel&#233;fono / WhatsApp <span style="color:rgba(255,255,255,0.3);font-size:11px">(opcional)</span></div>';
+  html+='<input class="diag-input" id="cT" placeholder="+1 809 000 0000" value="'+(diagData.contacto_tel||'')+'" style="font-size:16px;padding:14px">';
+  c.innerHTML=mkStep('Confirma tus datos','Un asesor se comunicar&#225; contigo en menos de 24 horas.',html,5,'nextContacto()','Ver resumen &#8594;');
 }
 function nextContacto(){
-  var n=(document.getElementById('cN')||{}).value||'';
-  var t=(document.getElementById('cT')||{}).value||'';
-  if(!n||!t){alert('Por favor ingresa nombre y tel&#233;fono');return;}
-  diagData.contacto_nombre=n; diagData.contacto_tel=t;
-  diagData.contacto_email=(document.getElementById('cE')||{}).value||'';
+  diagData.contacto_tel=(document.getElementById('cT')||{}).value||'';
   renderStep(7);
 }
 
-// STEP 7
+// STEP 7 - Resumen
 function renderResumen(c){
   setProgress(7);
-  var tC=diagData.deudas.reduce(function(s,d){return s+Number(d.cuota_mensual||0);},0);
+  var sym=diagData.moneda;
+  var tC=diagData.deudas.reduce(function(s,d){return s+parseMonto(d.cuota_mensual||0);},0);
   var tI=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
-  var tF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
-  var tV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
+  var tF=diagData.gastos_fijos.reduce(function(s,g){return s+parseMonto(g.monto);},0);
+  var tV=diagData.gastos_variables.reduce(function(s,g){return s+parseMonto(g.monto);},0);
   var fl=tI-tF-tV-tC; var rt=tI?Math.round((tC/tI)*100):0;
+  var u=_getUser();
   var rows='';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Nombre</div><div class="diag-sum-val">'+diagData.contacto_nombre+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Tel&#233;fono</div><div class="diag-sum-val">'+diagData.contacto_tel+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Nombre</div><div class="diag-sum-val">'+u.nombre+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Email</div><div class="diag-sum-val">'+u.email+'</div></div>';
+  if(diagData.contacto_tel) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Tel&#233;fono</div><div class="diag-sum-val">'+diagData.contacto_tel+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Moneda</div><div class="diag-sum-val">'+sym+'</div></div>';
   rows+='<div class="diag-sum-row"><div class="diag-sum-label">Situaci&#243;n</div><div class="diag-sum-val">'+diagData.situacion.join(', ')+'</div></div>';
-  if(diagData.deudas.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Deudas</div><div class="diag-sum-val">'+diagData.deudas.map(function(d){return d.acreedor+' RD$'+Number(d.monto).toLocaleString()+' &#183; Cuota: RD$'+Number(d.cuota_mensual||0).toLocaleString();}).join('<br>')+'</div></div>';
-  if(tC) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total cuotas/mes</div><div class="diag-sum-val">RD$'+tC.toLocaleString()+'</div></div>';
-  if(diagData.ingresos.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Ingresos</div><div class="diag-sum-val">'+diagData.ingresos.map(function(i){return i.tipo+' RD$'+Number(i.monto).toLocaleString()+' '+i.frecuencia;}).join('<br>')+'</div></div>';
-  if(tI) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total mensual</div><div class="diag-sum-val">RD$'+tI.toLocaleString()+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos fijos</div><div class="diag-sum-val">RD$'+tF.toLocaleString()+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos variables</div><div class="diag-sum-val">RD$'+tV.toLocaleString()+'</div></div>';
+  if(diagData.deudas.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Deudas</div><div class="diag-sum-val">'+diagData.deudas.map(function(d){return d.acreedor+' ('+d.tipo+') '+sym+' '+fmtNum(d.monto);}).join('<br>')+'</div></div>';
+  if(tC) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total cuotas</div><div class="diag-sum-val">'+sym+' '+fmtNum(tC)+'/mes</div></div>';
+  if(diagData.ingresos.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Ingresos</div><div class="diag-sum-val">'+diagData.ingresos.map(function(i){return i.tipo+' '+sym+' '+fmtNum(i.monto)+' '+i.frecuencia;}).join('<br>')+'</div></div>';
+  if(tI) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total mensual</div><div class="diag-sum-val">'+sym+' '+fmtNum(tI)+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos fijos</div><div class="diag-sum-val">'+sym+' '+fmtNum(tF)+'</div></div>';
+  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos variables</div><div class="diag-sum-val">'+sym+' '+fmtNum(tV)+'</div></div>';
   rows+='<div class="diag-sum-row"><div class="diag-sum-label">Objetivo</div><div class="diag-sum-val">'+diagData.objetivo+'</div></div>';
-  if(tI) rows+='<div class="diag-sum-row" style="background:rgba(58,125,68,.06);border-color:rgba(58,125,68,.3)"><div class="diag-sum-label">Flujo libre</div><div class="diag-sum-val" style="color:'+(fl>=0?'var(--green-light)':'#E74C3C')+';font-weight:700">RD$'+fl.toLocaleString()+' &#183; Ratio: '+rt+'%</div></div>';
+  if(tI) rows+='<div class="diag-sum-row" style="background:rgba(58,125,68,.06);border-color:rgba(58,125,68,.3)"><div class="diag-sum-label">Flujo libre</div><div class="diag-sum-val" style="color:'+(fl>=0?'var(--green-light)':'#E74C3C')+';font-weight:700">'+sym+' '+fmtNum(fl)+' &#183; Ratio: '+rt+'%</div></div>';
   c.innerHTML='<div class="diag-step"><div class="diag-question">Revisa tu informaci&#243;n</div><div class="diag-hint">Confirma que todo est&#233; correcto antes de enviar.</div><div class="diag-summary">'+rows+'</div><div class="diag-nav"><button class="diag-back" onclick="renderStep(6)">&#8592; Editar</button><button class="diag-next" onclick="submitDiag()">Enviar diagn&#243;stico &#10003;</button></div></div>';
 }
 
-// ── SUBMIT ──
+// SUBMIT
 function submitDiag(){
   var btn=document.querySelector('#diagForm .diag-next');
   if(btn){btn.textContent='Enviando...';btn.disabled=true;}
-  var tC=diagData.deudas.reduce(function(s,d){return s+Number(d.cuota_mensual||0);},0);
+  var u=_getUser();
+  var sym=diagData.moneda;
+  var tC=diagData.deudas.reduce(function(s,d){return s+parseMonto(d.cuota_mensual||0);},0);
   var tI=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
-  var tF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
-  var tV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
-  var dTxt=diagData.deudas.length?diagData.deudas.map(function(d){return d.acreedor+' RD$'+Number(d.monto).toLocaleString()+' Cuota:RD$'+Number(d.cuota_mensual||0).toLocaleString()+' '+d.estado+' '+d.tasa;}).join(' | '):'Ninguna';
-  var iTxt=diagData.ingresos.length?diagData.ingresos.map(function(i){return i.tipo+' RD$'+Number(i.monto).toLocaleString()+' '+i.frecuencia;}).join(' | '):'Ninguno';
-  var gfTxt=diagData.gastos_fijos.length?diagData.gastos_fijos.map(function(g){return g.categoria+' RD$'+Number(g.monto).toLocaleString();}).join(' | '):'Ninguno';
-  var gvTxt=diagData.gastos_variables.length?diagData.gastos_variables.map(function(g){return g.categoria+' RD$'+Number(g.monto).toLocaleString();}).join(' | '):'Ninguno';
-  var fl='RD$'+(tI-tF-tV-tC).toLocaleString();
+  var tF=diagData.gastos_fijos.reduce(function(s,g){return s+parseMonto(g.monto);},0);
+  var tV=diagData.gastos_variables.reduce(function(s,g){return s+parseMonto(g.monto);},0);
+  var fl=sym+' '+(tI-tF-tV-tC).toLocaleString();
+  var dTxt=diagData.deudas.length?diagData.deudas.map(function(d){return d.acreedor+' ('+d.tipo+') '+sym+' '+fmtNum(d.monto)+' Cuota:'+sym+' '+fmtNum(d.cuota_mensual||0)+' '+d.estado;}).join(' | '):'Ninguna';
+  var iTxt=diagData.ingresos.length?diagData.ingresos.map(function(i){return i.tipo+' '+sym+' '+fmtNum(i.monto)+' '+i.frecuencia;}).join(' | '):'Ninguno';
+  var gfTxt=diagData.gastos_fijos.length?diagData.gastos_fijos.map(function(g){return g.categoria+' '+sym+' '+fmtNum(g.monto);}).join(' | '):'Ninguno';
+  var gvTxt=diagData.gastos_variables.length?diagData.gastos_variables.map(function(g){return g.categoria+' '+sym+' '+fmtNum(g.monto);}).join(' | '):'Ninguno';
 
+  // Web3Forms email
   fetch('https://api.web3forms.com/submit',{
     method:'POST',
     headers:{'Content-Type':'application/json','Accept':'application/json'},
     body:JSON.stringify({
       access_key:WEB3_KEY,
-      subject:'FINEXO - Nuevo Lead: '+diagData.contacto_nombre,
+      subject:'FINEXO - Nuevo Lead: '+u.nombre,
       from_name:'Finexo Advisory Web',
-      NOMBRE:diagData.contacto_nombre, TELEFONO:diagData.contacto_tel,
-      EMAIL:diagData.contacto_email||'N/D', SITUACION:diagData.situacion.join(', '),
-      DEUDAS:dTxt, TOTAL_CUOTAS:'RD$'+tC.toLocaleString(),
-      INGRESOS:iTxt, TOTAL_INGRESOS:'RD$'+tI.toLocaleString(),
+      NOMBRE:u.nombre, TELEFONO:diagData.contacto_tel||'N/D',
+      EMAIL:u.email, MONEDA:sym, SITUACION:diagData.situacion.join(', '),
+      DEUDAS:dTxt, TOTAL_CUOTAS:sym+' '+fmtNum(tC),
+      INGRESOS:iTxt, TOTAL_INGRESOS:sym+' '+fmtNum(tI),
       GASTOS_FIJOS:gfTxt, GASTOS_VARIABLES:gvTxt,
-      TOTAL_GASTOS:'RD$'+(tF+tV).toLocaleString(), FLUJO_LIBRE:fl, OBJETIVO:diagData.objetivo
+      TOTAL_GASTOS:sym+' '+fmtNum(tF+tV), FLUJO_LIBRE:fl, OBJETIVO:diagData.objetivo
     })
-  }).then(function(r){return r.json();}).then(function(d){console.log('W3F:',d.success?'OK':d.message);}).catch(function(e){console.error('W3F:',e);});
+  }).catch(function(e){console.error('W3F:',e);});
 
-  var aiP='Cliente:'+diagData.contacto_nombre+' Tel:'+diagData.contacto_tel+' Situacion:'+diagData.situacion.join(',')+' Deudas:'+dTxt+' TotalCuotas:RD$'+tC+' Ingresos:'+iTxt+' TotalIngresos:RD$'+tI+' GastosFijos:'+gfTxt+' GastosVariables:'+gvTxt+' FlujoLibre:'+fl+' Objetivo:'+diagData.objetivo;
-  var aiS='Eres analista financiero senior de Finexo Advisory Republica Dominicana. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento 4)Flujo libre real 5)Servicio Finexo recomendado con precio en RD$ 6)Estrategia paso a paso 7)Notas para el asesor.';
-  fetch(CF_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:aiS,messages:[{role:'user',content:aiP}]})})
+  // Generate brief client analysis via AI
+  var prompt='Cliente:'+u.nombre+' Situacion:'+diagData.situacion.join(',')+' Deudas:'+dTxt+' Ingresos:'+iTxt+' GastosFijos:'+gfTxt+' GastosVariables:'+gvTxt+' FlujoLibre:'+fl+' Objetivo:'+diagData.objetivo;
+  var sysClient='Eres asesor financiero de Finexo Advisory RD. Basado en este perfil genera un analisis MUY BREVE (max 4 oraciones) para el cliente con: 1)Su situacion actual en una frase 2)Nivel de urgencia (Alta/Media/Baja) con una razon breve 3)Plan recomendado en una frase. Responde en espanol, tono profesional pero empático. NO incluyas numeros detallados ni jerga tecnica.';
+  
+  var clientAnalysis = '';
+  fetch(CF_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sysClient,messages:[{role:'user',content:prompt}]})})
   .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
   .then(function(d){
-    var a=d.content&&d.content[0]?d.content[0].text:'';
-    if(a) {
-      fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({access_key:WEB3_KEY,subject:'FINEXO - Analisis IA: '+diagData.contacto_nombre,from_name:'Finexo IA',CLIENTE:diagData.contacto_nombre,TELEFONO:diagData.contacto_tel,ANALISIS_IA:a})}).catch(function(e){console.error(e);});
-      // Save AI analysis to Supabase
-      if(_supa && _user) {
-        _supa.from('diagnosticos').update({analisis_ia: a}).eq('user_id', _user.id).order('created_at', {ascending:false}).limit(1).then(function(r){
-          if(r.error) console.error('AI update error:', r.error.message);
-          else console.log('AI analysis saved ✓');
-        });
-      }
-    }
-  }).catch(function(e){console.log('AI skip:',e.message);});
-
-  _saveToSupabase({nombre:diagData.contacto_nombre,telefono:diagData.contacto_tel,email:diagData.contacto_email||'',situacion:diagData.situacion.join(', '),deudas:dTxt,ingresos:iTxt,gastos_fijos:gfTxt,gastos_variables:gvTxt,flujo_libre:fl,objetivo:diagData.objetivo});
+    clientAnalysis=(d.content&&d.content[0])?d.content[0].text:'';
+    _saveToSupabase({
+      nombre:u.nombre, telefono:diagData.contacto_tel||'',
+      email:u.email, moneda:sym,
+      situacion:diagData.situacion.join(', '),
+      deudas:dTxt, ingresos:iTxt, gastos_fijos:gfTxt,
+      gastos_variables:gvTxt, flujo_libre:fl, objetivo:diagData.objetivo,
+      analisis_cliente:clientAnalysis
+    });
+  }).catch(function(e){
+    // Save even if AI fails
+    _saveToSupabase({
+      nombre:u.nombre, telefono:diagData.contacto_tel||'',
+      email:u.email, moneda:sym,
+      situacion:diagData.situacion.join(', '),
+      deudas:dTxt, ingresos:iTxt, gastos_fijos:gfTxt,
+      gastos_variables:gvTxt, flujo_libre:fl, objetivo:diagData.objetivo,
+      analisis_cliente:''
+    });
+  });
 }
 
 function showDiagDone(){
-  setProgress(8);
-  var ref='FIN-'+Date.now().toString(36).toUpperCase();
+  setProgress(7);
   var d=document.getElementById('diagForm');
+  if(!d) return;
   d.innerHTML='';
   var wrap=document.createElement('div');
   wrap.className='diag-done-wrap';
   wrap.innerHTML='<div class="diag-done-icon">&#x2705;</div>'
     +'<div class="diag-done-title">&#161;Listo! Informaci&#243;n recibida.</div>'
     +'<div class="diag-done-text">Un asesor revisar&#225; tu caso en las pr&#243;ximas <strong>24 horas</strong>.</div>'
-    +'<div class="diag-ref">Ref: '+ref+'</div>'
     +'<div id="diagSaveStatus" style="font-size:12px;margin-top:10px;display:none"></div>';
   var btn=document.createElement('button');
-  btn.textContent='Cerrar ✕';
+  btn.textContent='Cerrar';
   btn.className='save-btn';
   btn.style.cssText='padding:9px 20px;font-size:13px;margin-top:12px';
   btn.onclick=closeAgent;
@@ -1427,24 +1529,11 @@ function showDiagDone(){
 
 function renderReport(r){
   if(!r||!document.getElementById('reportOutput')) return;
-  var out='<div class="rpt-card"><div class="rpt-hdr"><div><div class="rpt-logo">Finexo<span> Advisory</span></div></div><div class="rpt-meta">'+new Date().toLocaleDateString('es-DO',{day:'2-digit',month:'long',year:'numeric'})+'</div></div>';
-  out+='<div class="rpt-body">';
-  out+='<div class="rpt-sec"><div class="rpt-sec-title">Cliente</div><div class="rpt-text" style="font-size:17px;font-weight:700;color:#0D1F3C">'+(r.nombre_cliente||diagData.contacto_nombre||'N/D')+'</div></div>';
-  if(r.resumen_ejecutivo) out+='<div class="rpt-sec"><div class="rpt-sec-title">Resumen</div><div class="rpt-text">'+r.resumen_ejecutivo+'</div></div>';
-  if(r.notas_asesor) out+='<div class="rpt-sec"><div class="rpt-sec-title">Notas</div><div class="notes-box">'+r.notas_asesor+'</div></div>';
-  if(r.servicio_recomendado) out+='<div class="rpt-sec"><div class="rpt-sec-title">Servicio Recomendado</div><div class="rec-box"><div class="rec-name">'+r.servicio_recomendado+'</div><div class="rec-price">'+(r.precio_estimado||'')+'</div></div></div>';
-  out+='</div><div class="rpt-ftr">Confidencial &#183; Finexo Advisory</div></div>';
+  var out='<div style="padding:20px;color:var(--white)">';
+  if(r.resumen_ejecutivo) out+='<p style="margin-bottom:12px">'+r.resumen_ejecutivo+'</p>';
+  if(r.notas_asesor) out+='<p style="color:rgba(255,255,255,0.6);font-size:13px">'+r.notas_asesor+'</p>';
+  out+='</div>';
   document.getElementById('reportOutput').innerHTML=out;
-}
-function openDiag(e) {
-  if(e) e.preventDefault();
-  diagData = {nombre:'',situacion:[],deudas:[],ingresos:[],
-    gastos_fijos:[],gastos_variables:[],
-    objetivo:'',contacto_nombre:'',contacto_tel:'',contacto_email:''};
-  selEstado=''; tipoIngr=''; frecIngr='';
-  document.getElementById('agentModal').classList.add('open');
-  document.body.style.overflow='hidden';
-  renderStep(0);
 }
 
 </script>
