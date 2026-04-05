@@ -958,9 +958,10 @@ document.addEventListener('click', function(e) { if(e.target.id === 'detailModal
 <script>
 function _saveToSupabase(payload) {
   if(!_supa || !_user) {
-    _showSaveStatus('Sin sesi&#243;n activa', false);
+    _showSaveStatus('Sin sesion activa - _user=' + !!_user, false);
     return;
   }
+  _showSaveStatus('Guardando... user=' + _user.id.substring(0,8), true);
   _supa.from('diagnosticos').insert({
     user_id: _user.id,
     nombre: payload.nombre,
