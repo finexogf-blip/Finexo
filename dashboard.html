@@ -932,9 +932,16 @@ function renderDetailHTML(item, isAdmin) {
     html += '</select>';
     html += '<label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Notas para el cliente</label>';
     html += '<textarea class="notes-ta" id="detailNotes">'+(item.notas_admin||'')+'</textarea>';
-    html += '<div style="margin-top:10px;display:flex;align-items:center;gap:10px">';
+    html += '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">';
     html += '<button class="update-btn" data-id="'+item.id+'" onclick="updateSol(this.dataset.id)">Guardar cambios</button>';
-    html += '<span class="update-ok" id="updateOk">&#x2713; Guardado</span></div></div>';
+    html += '<button class="update-btn" style="background:linear-gradient(135deg,#1a6b8a,#0d4a6b)" data-id="'+item.id+'" onclick="generateAI(this.dataset.id)" id="btnGenAI">&#x2728; Generar an&#225;lisis IA</button>';
+    html += '<button class="update-btn" style="background:linear-gradient(135deg,#5a3e9b,#3a2468)" data-id="'+item.id+'" onclick="exportSol(this.dataset.id)">&#x2B73; Exportar</button>';
+    html += '<span class="update-ok" id="updateOk">&#x2713; Guardado</span></div>';
+    if(item.analisis_ia) {
+      html += '<div style="margin-top:14px"><div class="card-title">An&#225;lisis IA guardado</div>';
+      html += '<div style="background:rgba(26,107,138,0.08);border:1px solid rgba(26,107,138,0.2);border-radius:10px;padding:14px;font-size:12px;color:rgba(255,255,255,0.75);white-space:pre-wrap;line-height:1.7;max-height:200px;overflow-y:auto">'+item.analisis_ia+'</div></div>';
+    }
+    html += '</div>';
   }
   document.getElementById('detailBody').innerHTML = html;
 }
@@ -951,6 +958,99 @@ async function updateSol(id) {
     loadAdminSol();
   }
 }
+async function generateAI(id) {
+  var btn = document.getElementById('btnGenAI');
+  if(btn) { btn.textContent = '&#x23F3; Generando...'; btn.disabled = true; }
+  
+  // Find the item
+  var item = _adminItems.find(function(i){ return i.id === id; }) || _allItems.find(function(i){ return i.id === id; });
+  if(!item) { if(btn){btn.textContent='&#x2728; Generar an\u00e1lisis IA';btn.disabled=false;} return; }
+  
+  var prompt = 'Cliente:'+item.nombre+' Tel:'+item.telefono+' Situacion:'+item.situacion+' Deudas:'+item.deudas+' Ingresos:'+item.ingresos+' GastosFijos:'+item.gastos_fijos+' GastosVariables:'+item.gastos_variables+' FlujoLibre:'+item.flujo_libre+' Objetivo:'+item.objetivo;
+  var system = 'Eres analista financiero senior de Finexo Advisory Republica Dominicana. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento 4)Flujo libre real 5)Servicio Finexo recomendado con precio en RD$ 6)Estrategia paso a paso 7)Notas para el asesor.';
+  
+  try {
+    var resp = await fetch('https://square-frog-0e47.finexo-gf.workers.dev', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({system: system, messages: [{role: 'user', content: prompt}]})
+    });
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    var analysis = data.content && data.content[0] ? data.content[0].text : '';
+    if(!analysis) throw new Error('Respuesta vac\u00eda');
+    
+    // Save to Supabase
+    await _supa.from('diagnosticos').update({analisis_ia: analysis}).eq('id', id);
+    
+    // Update display
+    var ok = document.getElementById('updateOk');
+    if(ok) { ok.textContent = '\u2713 An\u00e1lisis guardado'; ok.style.display = 'inline'; setTimeout(function(){ ok.style.display='none'; ok.textContent='\u2713 Guardado'; }, 3000); }
+    
+    // Reload admin items
+    loadAdminSol();
+    
+  } catch(e) {
+    var ok = document.getElementById('updateOk');
+    if(ok) { ok.textContent = 'Error IA: ' + e.message; ok.style.color = '#E74C3C'; ok.style.display = 'inline'; }
+  }
+  if(btn) { btn.textContent = '\u2728 Generar an\u00e1lisis IA'; btn.disabled = false; }
+}
+
+function exportSol(id) {
+  var item = _adminItems.find(function(i){ return i.id === id; }) || _allItems.find(function(i){ return i.id === id; });
+  if(!item) return;
+  
+  var fecha = new Date(item.created_at).toLocaleDateString('es-DO', {day:'2-digit',month:'long',year:'numeric'});
+  var lines = [
+    'FINEXO ADVISORY - INFORME DE DIAGN\u00d3STICO',
+    '==========================================',
+    'Fecha: ' + fecha,
+    'Referencia: ' + item.id.substring(0,8).toUpperCase(),
+    '',
+    'DATOS DEL CLIENTE',
+    '-----------------',
+    'Nombre: ' + (item.nombre||'N/D'),
+    'Tel\u00e9fono: ' + (item.telefono||'N/D'),
+    'Email: ' + (item.email_cliente||'N/D'),
+    '',
+    'SITUACI\u00d3N FINANCIERA',
+    '---------------------',
+    'Situaci\u00f3n: ' + (item.situacion||'N/D'),
+    'Deudas: ' + (item.deudas||'N/D'),
+    'Ingresos: ' + (item.ingresos||'N/D'),
+    'Gastos fijos: ' + (item.gastos_fijos||'N/D'),
+    'Gastos variables: ' + (item.gastos_variables||'N/D'),
+    'Flujo libre: ' + (item.flujo_libre||'N/D'),
+    'Objetivo: ' + (item.objetivo||'N/D'),
+    '',
+    'ESTATUS: ' + (item.estatus||'Nuevo'),
+    'Notas asesor: ' + (item.notas_admin||'Ninguna'),
+    ''
+  ];
+  
+  if(item.analisis_ia) {
+    lines.push('AN\u00c1LISIS IA');
+    lines.push('------------');
+    lines.push(item.analisis_ia);
+    lines.push('');
+  }
+  
+  lines.push('==========================================');
+  lines.push('Confidencial - Finexo Advisory - Rep\u00fablica Dominicana');
+  
+  var text = lines.join('\n');
+  var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Finexo-' + (item.nombre||'cliente').replace(/\s+/g,'-') + '-' + item.id.substring(0,8) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function closeDetail() { document.getElementById('detailModal').classList.remove('open'); }
 document.addEventListener('click', function(e) { if(e.target.id === 'detailModal') closeDetail(); });
 </script>
@@ -958,13 +1058,9 @@ document.addEventListener('click', function(e) { if(e.target.id === 'detailModal
 <script>
 function _saveToSupabase(payload) {
   showDiagDone();
-  if(!_supa || !_user) {
-    alert('ERROR: No hay sesion activa. _supa=' + !!_supa + ' _user=' + !!_user);
-    return;
-  }
-  var uid = _user.id;
+  if(!_supa || !_user) return;
   _supa.from('diagnosticos').insert({
-    user_id: uid,
+    user_id: _user.id,
     nombre: payload.nombre,
     telefono: payload.telefono,
     email_cliente: payload.email||'',
@@ -976,17 +1072,13 @@ function _saveToSupabase(payload) {
     flujo_libre: payload.flujo_libre,
     objetivo: payload.objetivo
   }).then(function(result) {
-    var statusEl = document.getElementById('diagSaveStatus');
+    var el = document.getElementById('diagSaveStatus');
     if(result.error) {
-      alert('DB ERROR: ' + result.error.message + ' | code: ' + result.error.code);
-      if(statusEl) { statusEl.textContent='Error: '+result.error.message; statusEl.style.color='#E74C3C'; statusEl.style.display='block'; }
+      if(el) { el.textContent='Error al guardar: '+result.error.message; el.style.color='#E74C3C'; el.style.display='block'; }
     } else {
-      alert('GUARDADO OK. user_id: ' + uid.substring(0,8));
-      if(statusEl) { statusEl.textContent='\u2713 Guardado'; statusEl.style.color='var(--green-light)'; statusEl.style.display='block'; }
+      if(el) { el.textContent='\u2713 Guardado en tu portal'; el.style.color='var(--green-light)'; el.style.display='block'; }
       setTimeout(function(){ loadInicio(); }, 1500);
     }
-  }).catch(function(e){
-    alert('EXCEPCION: ' + e.message);
   });
 }
 

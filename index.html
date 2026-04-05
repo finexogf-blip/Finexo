@@ -1000,23 +1000,7 @@ function submitDiag(){
     })
   }).then(function(r){return r.json();}).then(function(d){console.log('W3F:',d.success?'OK':d.message);}).catch(function(e){console.error('W3F:',e);});
 
-  var aiP='Cliente:'+diagData.contacto_nombre+' Tel:'+diagData.contacto_tel+' Situacion:'+diagData.situacion.join(',')+' Deudas:'+dTxt+' TotalCuotas:RD$'+tC+' Ingresos:'+iTxt+' TotalIngresos:RD$'+tI+' GastosFijos:'+gfTxt+' GastosVariables:'+gvTxt+' FlujoLibre:'+fl+' Objetivo:'+diagData.objetivo;
-  var aiS='Eres analista financiero senior de Finexo Advisory Republica Dominicana. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento 4)Flujo libre real 5)Servicio Finexo recomendado con precio en RD$ 6)Estrategia paso a paso 7)Notas para el asesor.';
-  fetch(CF_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:aiS,messages:[{role:'user',content:aiP}]})})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-  .then(function(d){
-    var a=d.content&&d.content[0]?d.content[0].text:'';
-    if(a) {
-      fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({access_key:WEB3_KEY,subject:'FINEXO - Analisis IA: '+diagData.contacto_nombre,from_name:'Finexo IA',CLIENTE:diagData.contacto_nombre,TELEFONO:diagData.contacto_tel,ANALISIS_IA:a})}).catch(function(e){console.error(e);});
-      // Save AI analysis to Supabase
-      if(_supa && _user) {
-        _supa.from('diagnosticos').update({analisis_ia: a}).eq('user_id', _user.id).order('created_at', {ascending:false}).limit(1).then(function(r){
-          if(r.error) console.error('AI update error:', r.error.message);
-          else console.log('AI analysis saved ✓');
-        });
-      }
-    }
-  }).catch(function(e){console.log('AI skip:',e.message);});
+  // AI analysis available on-demand from admin portal
 
   _saveToSupabase({nombre:diagData.contacto_nombre,telefono:diagData.contacto_tel,email:diagData.contacto_email||'',situacion:diagData.situacion.join(', '),deudas:dTxt,ingresos:iTxt,gastos_fijos:gfTxt,gastos_variables:gvTxt,flujo_libre:fl,objetivo:diagData.objetivo});
 
