@@ -957,11 +957,13 @@ document.addEventListener('click', function(e) { if(e.target.id === 'detailModal
 
 <script>
 function _saveToSupabase(payload) {
+  // Show done screen immediately
+  showDiagDone();
+  
   if(!_supa || !_user) {
-    _showSaveStatus('Sin sesion activa - _user=' + !!_user, false);
+    console.warn('No session');
     return;
   }
-  _showSaveStatus('Guardando... user=' + _user.id.substring(0,8), true);
   _supa.from('diagnosticos').insert({
     user_id: _user.id,
     nombre: payload.nombre,
@@ -975,11 +977,14 @@ function _saveToSupabase(payload) {
     flujo_libre: payload.flujo_libre,
     objetivo: payload.objetivo
   }).then(function(result) {
+    var statusEl = document.getElementById('diagSaveStatus');
     if(result.error) {
-      _showSaveStatus('Error: ' + result.error.message, false);
+      console.error('Save error:', result.error.message);
+      if(statusEl) { statusEl.textContent = 'Error: ' + result.error.message; statusEl.style.color='#E74C3C'; statusEl.style.display='block'; }
     } else {
-      _showSaveStatus('&#x2713; Guardado en tu portal', true);
-      setTimeout(function(){ loadInicio(); }, 800);
+      console.log('Saved OK, user_id:', _user.id);
+      if(statusEl) { statusEl.textContent = '\u2713 Guardado en tu portal'; statusEl.style.color='var(--green-light)'; statusEl.style.display='block'; }
+      setTimeout(function(){ loadInicio(); }, 1500);
     }
   });
 }
@@ -1304,8 +1309,6 @@ function submitDiag(){
   }).catch(function(e){console.log('AI skip:',e.message);});
 
   _saveToSupabase({nombre:diagData.contacto_nombre,telefono:diagData.contacto_tel,email:diagData.contacto_email||'',situacion:diagData.situacion.join(', '),deudas:dTxt,ingresos:iTxt,gastos_fijos:gfTxt,gastos_variables:gvTxt,flujo_libre:fl,objetivo:diagData.objetivo});
-
-  setTimeout(function(){showDiagDone();},1000);
 }
 
 function showDiagDone(){
