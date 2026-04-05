@@ -586,509 +586,13 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
   </div>
 </div>
 
-<!-- ADVISOR PANEL -->
-<div class="adv-panel" id="advPanel">
+<!-- ADVISOR PANEL (minimal - not used in dashboard) -->
+<div class="adv-panel" id="advPanel" style="display:none">
   <div class="adv-topbar">
-    <div><div class="adv-topbar-title">Informe del Asesor</div><div class="adv-topbar-sub">Finexo Advisory · Uso Interno Exclusivo</div></div>
-    <div class="adv-actions">
-      <button class="adv-btn" onclick="closeAdvisor()">← Volver</button>
-      <button class="adv-btn primary" onclick="window.print()">Imprimir</button>
-    </div>
+    <button onclick="closeAdvisor()" style="background:transparent;border:none;color:white;cursor:pointer;padding:10px">&#x2715; Cerrar</button>
   </div>
-  <div class="adv-content"><div id="reportOutput"></div></div>
+  <div id="reportOutput" style="padding:20px"></div>
 </div>
-
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-
-
-
-
-// Nav scroll
-// nav scroll removed (not needed in dashboard)
-
-// Mobile menu
-// toggleMenu removed (not needed in dashboard)
-
-// Scroll reveal
-var revealObs = new IntersectionObserver(function(entries) {
-  entries.forEach(function(e) {
-    if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
-  });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(function(el) { revealObs.observe(el); });
-
-// Contact form
-// submitForm removed (not needed in dashboard)
-
-function closeAdvisor() { document.getElementById('advPanel').classList.remove('open'); document.body.style.overflow=''; }
-
-
-// ── FINEXO DIAGNOSTIC FORM ──
-var WEB3_KEY = 'f5915135-ea41-4c92-9b27-4b6a515b22b5';
-var CF_WORKER = 'https://square-frog-0e47.finexo-gf.workers.dev';
-
-var diagData = {
-  nombre:'', situacion:[], deudas:[], ingresos:[],
-  gastos_fijos:[], gastos_variables:[],
-  objetivo:'', contacto_nombre:'', contacto_tel:'', contacto_email:''
-};
-var selEstado='', tipoIngr='', frecIngr='';
-
-function openAgent(e){
-  if(e) e.preventDefault();
-  if(!_user){ openAuthModal(); return; }
-  document.getElementById('agentModal').classList.add('open');
-  document.body.style.overflow='hidden';
-  if(!diagData.nombre) renderStep(0);
-}
-function closeAgent(){ document.getElementById('agentModal').classList.remove('open'); document.body.style.overflow=''; }
-function closeAdvisor(){ document.getElementById('advPanel').classList.remove('open'); document.body.style.overflow=''; }
-function openAdvisor(){ document.getElementById('agentModal').classList.remove('open'); document.getElementById('advPanel').classList.add('open'); document.body.style.overflow='hidden'; window.scrollTo({top:0}); }
-function openTC(){ document.getElementById('tcModal').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeTC(){ document.getElementById('tcModal').classList.remove('open'); document.body.style.overflow=''; }
-
-function setProgress(s){
-  var pct=Math.min(Math.round((s/7)*100),100);
-  document.getElementById('diagProgress').style.width=pct+'%';
-  document.getElementById('diagProgressLabel').textContent=s<7?'Paso '+(s+1)+' de 7':'Completado';
-}
-function renderStep(s){ setProgress(s); var c=document.getElementById('diagForm'); [renderNombre,renderSituacion,renderDeudas,renderIngresos,renderGastos,renderObjetivo,renderContacto,renderResumen][s](c); }
-
-function mkNav(back,fn,lbl){
-  var b=back>=0?'<button class="diag-back" onclick="renderStep('+back+')">&#8592; Atr&#225;s</button>':'<div></div>';
-  return '<div class="diag-nav">'+b+'<button class="diag-next" onclick="'+fn+'">'+(lbl||'Continuar &#8594;')+'</button></div>';
-}
-function mkStep(q,hint,body,back,fn,lbl){
-  return '<div class="diag-step"><div class="diag-question">'+q+'</div><div class="diag-hint">'+hint+'</div>'+body+mkNav(back,fn,lbl)+'</div>';
-}
-
-// STEP 0
-function renderNombre(c){
-  c.innerHTML=mkStep('&#191;Cu&#225;l es tu nombre?','As&#237; personalizamos tu diagn&#243;stico.',
-    '<input class="diag-input" id="iNom" placeholder="Ej: Juan Garc&#237;a" value="'+diagData.nombre+'" oninput="diagData.nombre=this.value">',
-    -1,'nextN()');
-  setTimeout(function(){var el=document.getElementById('iNom');if(el)el.focus();},80);
-}
-function nextN(){ if(!diagData.nombre.trim()){alert('Por favor ingresa tu nombre');return;} renderStep(1); }
-
-// STEP 1
-var _sitOpts=['Tengo deudas dif&#237;ciles de pagar','Mis cuotas son muy altas','Estoy en mora con acreedores','Quiero consolidar mis deudas','Necesito mejorar mi historial crediticio','Busco financiamiento nuevo','Mi empresa tiene problemas financieros','Quiero estructurar capital privado'];
-function renderSituacion(c){
-  var html='<div class="diag-options">';
-  for(var i=0;i<_sitOpts.length;i++){
-    var sel=diagData.situacion.indexOf(_sitOpts[i])!==-1?' selected':'';
-    html+='<button class="diag-opt'+sel+'" onclick="toggleSit('+i+',this)">'+_sitOpts[i]+'</button>';
-  }
-  html+='</div>';
-  c.innerHTML=mkStep(diagData.nombre+', &#191;cu&#225;l es tu situaci&#243;n?','Puedes seleccionar m&#225;s de una.',html,0,'nextSit()');
-}
-function toggleSit(idx,el){
-  var v=_sitOpts[idx]; var i=diagData.situacion.indexOf(v);
-  if(i===-1){diagData.situacion.push(v);el.classList.add('selected');}
-  else{diagData.situacion.splice(i,1);el.classList.remove('selected');}
-}
-function nextSit(){ if(!diagData.situacion.length){alert('Selecciona al menos una opci&#243;n');return;} renderStep(2); }
-
-// STEP 2
-function renderDeudas(c){
-  var html='';
-  for(var i=0;i<diagData.deudas.length;i++){
-    var d=diagData.deudas[i];
-    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+d.acreedor+'</strong> &#8212; RD$'+Number(d.monto).toLocaleString()+'<span>Cuota: RD$'+Number(d.cuota_mensual||0).toLocaleString()+' &#183; '+d.estado+'</span></div><button class="diag-debt-remove" onclick="removeDebt('+i+')">&#x2715;</button></div>';
-  }
-  var aSel=selEstado==='al dia'?' selected':'';
-  var mSel=selEstado==='en mora'?' selected':'';
-  html+='<div class="diag-label">Acreedor</div><input class="diag-input" id="dA" placeholder="Ej: Banco Popular...">';
-  html+='<div class="diag-input-row"><div><div class="diag-label">Monto total (RD$)</div><input class="diag-input" id="dM" type="number" placeholder="150000"></div><div><div class="diag-label">Cuota mensual (RD$)</div><input class="diag-input" id="dC" type="number" placeholder="8500"></div></div>';
-  html+='<div class="diag-input-row"><div><div class="diag-label">Tasa de inter&#233;s</div><input class="diag-input" id="dT" placeholder="Ej: 28% anual"></div><div><div class="diag-label">Tiempo restante</div><input class="diag-input" id="dTi" placeholder="Ej: 24 meses"></div></div>';
-  html+='<div class="diag-label" style="margin-bottom:8px">Estado</div>';
-  html+='<div class="diag-options"><button class="diag-opt'+aSel+'" id="bAlDia" onclick="setEst(0)">&#x2705; Al d&#237;a</button><button class="diag-opt'+mSel+'" id="bMora" onclick="setEst(1)">&#x26A0;&#xFE0F; En mora</button></div>';
-  html+='<button class="diag-add-btn" onclick="addDebt()">+ Agregar esta deuda</button>';
-  c.innerHTML=mkStep('&#191;Cu&#225;les son tus deudas?','Agrega cada deuda. Puedes continuar sin agregar.',html,1,'renderStep(3)',diagData.deudas.length?'Continuar &#8594;':'Omitir &#8594;');
-}
-function setEst(n){
-  selEstado=n===0?'al dia':'en mora';
-  var a=document.getElementById('bAlDia'),b=document.getElementById('bMora');
-  if(a&&b){a.classList.remove('selected');b.classList.remove('selected');if(n===0)a.classList.add('selected');else b.classList.add('selected');}
-}
-function addDebt(){
-  var a=(document.getElementById('dA')||{}).value||'';
-  var m=(document.getElementById('dM')||{}).value||'';
-  var cu=(document.getElementById('dC')||{}).value||'0';
-  var t=(document.getElementById('dT')||{}).value||'N/D';
-  var ti=(document.getElementById('dTi')||{}).value||'N/D';
-  if(!a||!m){alert('Ingresa el acreedor y el monto');return;}
-  if(!selEstado){alert('Indica si est&#225; al d&#237;a o en mora');return;}
-  diagData.deudas.push({acreedor:a,monto:m,cuota_mensual:cu,tasa:t,tiempo_restante:ti,estado:selEstado});
-  selEstado=''; renderDeudas(document.getElementById('diagForm'));
-}
-function removeDebt(i){ diagData.deudas.splice(i,1); renderDeudas(document.getElementById('diagForm')); }
-
-// STEP 3
-var _tipoOpts=['Salario','Negocio propio','Renta / alquiler','Remesas','Freelance','Otro'];
-var _frecOpts=['Semanal','Quincenal','Mensual'];
-function renderIngresos(c){
-  var html='';
-  for(var i=0;i<diagData.ingresos.length;i++){
-    var ing=diagData.ingresos[i];
-    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+ing.tipo+'</strong> &#8212; RD$'+Number(ing.monto).toLocaleString()+' '+ing.frecuencia+'<span>aprox. RD$'+Number(ing.mensualizado).toLocaleString()+'/mes</span></div><button class="diag-debt-remove" onclick="removeIngreso('+i+')">&#x2715;</button></div>';
-  }
-  html+='<div class="diag-options" id="tipoIngrOpts">';
-  for(var j=0;j<_tipoOpts.length;j++){
-    var tsel=tipoIngr===_tipoOpts[j]?' selected':'';
-    html+='<button class="diag-opt'+tsel+'" onclick="selTipoIngr('+j+',this)">'+_tipoOpts[j]+'</button>';
-  }
-  html+='</div>';
-  html+='<div class="diag-input-row"><div><div class="diag-label">Monto (RD$)</div><input class="diag-input" id="iMonto" type="number" placeholder="40000" oninput="calcMens()"></div>';
-  html+='<div><div class="diag-label" style="margin-bottom:6px">Frecuencia</div><div style="display:flex;gap:6px">';
-  for(var k=0;k<_frecOpts.length;k++){
-    var fsel=frecIngr===_frecOpts[k]?' selected':'';
-    html+='<button class="diag-opt frec-opt'+fsel+'" onclick="selFrecIngr('+k+',this)">'+_frecOpts[k]+'</button>';
-  }
-  html+='</div></div></div>';
-  html+='<div id="mensualizado" style="font-size:12px;color:rgba(255,255,255,.4);margin:4px 0 12px"></div>';
-  html+='<button class="diag-add-btn" onclick="addIngreso()">+ Agregar esta fuente</button>';
-  var total=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
-  if(total) html+='<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white)">Total mensual: <strong>RD$'+total.toLocaleString()+'</strong></div>';
-  c.innerHTML=mkStep('&#191;Cu&#225;les son tus fuentes de ingreso?','Agrega cada fuente. Puedes continuar sin agregar.',html,2,'nextIngresos()',diagData.ingresos.length?'Continuar &#8594;':'Omitir &#8594;');
-}
-function selTipoIngr(idx,el){
-  tipoIngr=_tipoOpts[idx];
-  document.querySelectorAll('#tipoIngrOpts .diag-opt').forEach(function(b){b.classList.remove('selected');});
-  el.classList.add('selected');
-}
-function selFrecIngr(idx,el){
-  frecIngr=_frecOpts[idx];
-  document.querySelectorAll('.frec-opt').forEach(function(b){b.classList.remove('selected');});
-  el.classList.add('selected'); calcMens();
-}
-function calcMens(){
-  var m=Number((document.getElementById('iMonto')||{}).value)||0;
-  var f=frecIngr==='Semanal'?4.33:frecIngr==='Quincenal'?2:1;
-  var el=document.getElementById('mensualizado');
-  if(el&&m&&frecIngr) el.textContent='&#8776; RD$'+Math.round(m*f).toLocaleString()+' mensuales';
-}
-function addIngreso(){
-  var m=(document.getElementById('iMonto')||{}).value||'';
-  if(!tipoIngr){alert('Selecciona el tipo de ingreso');return;}
-  if(!m){alert('Ingresa el monto');return;}
-  if(!frecIngr){alert('Selecciona la frecuencia');return;}
-  var factor=frecIngr==='Semanal'?4.33:frecIngr==='Quincenal'?2:1;
-  diagData.ingresos.push({tipo:tipoIngr,monto:m,frecuencia:frecIngr,mensualizado:Math.round(Number(m)*factor)});
-  tipoIngr=''; frecIngr=''; renderIngresos(document.getElementById('diagForm'));
-}
-function removeIngreso(i){ diagData.ingresos.splice(i,1); renderIngresos(document.getElementById('diagForm')); }
-function nextIngresos(){ renderStep(4); }
-
-// STEP 4
-var _catF=['Vivienda (alquiler/hipoteca)','Veh&#237;culo (cuota/seguro)','Educaci&#243;n','Seguro m&#233;dico','Servicios (luz, agua, internet)','Otro fijo'];
-var _catV=['Alimentaci&#243;n','Transporte / gasolina','Entretenimiento','Ropa y calzado','Salud / medicamentos','Otro variable'];
-function renderGastos(c){
-  var totalF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
-  var totalV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
-  var gfList='';
-  for(var i=0;i<diagData.gastos_fijos.length;i++){
-    var g=diagData.gastos_fijos[i];
-    gfList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+g.categoria+' &#8212; RD$'+Number(g.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto(0,'+i+')">&#x2715;</button></div>';
-  }
-  var gvList='';
-  for(var j=0;j<diagData.gastos_variables.length;j++){
-    var gv=diagData.gastos_variables[j];
-    gvList+='<div class="diag-debt-card" style="margin-bottom:6px;padding:10px 14px"><div class="diag-debt-info" style="font-size:13px">'+gv.categoria+' &#8212; RD$'+Number(gv.monto).toLocaleString()+'</div><button class="diag-debt-remove" onclick="removeGasto(1,'+j+')">&#x2715;</button></div>';
-  }
-  var optF='<option value="">Categor&#237;a...</option>';
-  for(var k=0;k<_catF.length;k++) optF+='<option>'+_catF[k]+'</option>';
-  var optV='<option value="">Categor&#237;a...</option>';
-  for(var l=0;l<_catV.length;l++) optV+='<option>'+_catV[l]+'</option>';
-  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
-  html+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">';
-  html+='<div class="diag-label" style="color:var(--green-light);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Fijos</div>';
-  html+=gfList+'<select class="diag-input" id="gfCat" style="margin-bottom:8px;font-size:13px">'+optF+'</select>';
-  html+='<input class="diag-input" id="gfMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">';
-  html+='<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto(0)">+ Agregar</button>';
-  if(totalF) html+='<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalF.toLocaleString()+'</div>';
-  html+='</div>';
-  html+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px">';
-  html+='<div class="diag-label" style="color:var(--gold);margin-bottom:10px;font-size:11px;letter-spacing:1px;text-transform:uppercase">Variables</div>';
-  html+=gvList+'<select class="diag-input" id="gvCat" style="margin-bottom:8px;font-size:13px">'+optV+'</select>';
-  html+='<input class="diag-input" id="gvMonto" type="number" placeholder="Monto (RD$)" style="margin-bottom:8px">';
-  html+='<button class="diag-add-btn" style="margin-bottom:0;font-size:13px" onclick="addGasto(1)">+ Agregar</button>';
-  if(totalV) html+='<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Total: RD$'+totalV.toLocaleString()+'</div>';
-  html+='</div></div>';
-  if(totalF+totalV) html+='<div style="background:rgba(58,125,68,.08);border:1px solid rgba(58,125,68,.2);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--white);margin-top:12px">Total gastos: <strong>RD$'+(totalF+totalV).toLocaleString()+'</strong></div>';
-  c.innerHTML=mkStep('Tus gastos mensuales','Separar fijos de variables nos ayuda a identificar d&#243;nde hay espacio.',html,3,'nextGastos()',(diagData.gastos_fijos.length||diagData.gastos_variables.length)?'Continuar &#8594;':'Omitir &#8594;');
-}
-function addGasto(tipo){
-  var cat=document.getElementById(tipo===0?'gfCat':'gvCat').value;
-  var monto=document.getElementById(tipo===0?'gfMonto':'gvMonto').value;
-  if(!cat){alert('Selecciona una categor&#237;a');return;}
-  if(!monto){alert('Ingresa el monto');return;}
-  if(tipo===0) diagData.gastos_fijos.push({categoria:cat,monto:monto});
-  else diagData.gastos_variables.push({categoria:cat,monto:monto});
-  renderGastos(document.getElementById('diagForm'));
-}
-function removeGasto(tipo,i){
-  if(tipo===0) diagData.gastos_fijos.splice(i,1);
-  else diagData.gastos_variables.splice(i,1);
-  renderGastos(document.getElementById('diagForm'));
-}
-function nextGastos(){ renderStep(5); }
-
-// STEP 5
-var _objOpts=['Reducir mis cuotas mensuales','Salir de deudas completamente','Negociar con mis acreedores','Mejorar mi historial crediticio','Conseguir nuevo financiamiento','Reorganizar las finanzas de mi empresa'];
-function renderObjetivo(c){
-  var html='<div class="diag-options">';
-  for(var i=0;i<_objOpts.length;i++){
-    var sel=diagData.objetivo===_objOpts[i]?' selected':'';
-    html+='<button class="diag-opt'+sel+'" onclick="selObjetivo('+i+',this)">'+_objOpts[i]+'</button>';
-  }
-  html+='</div>';
-  c.innerHTML=mkStep('&#191;Cu&#225;l es tu objetivo principal?','Selecciona el resultado m&#225;s importante para ti.',html,4,'nextObj()');
-}
-function selObjetivo(idx,el){
-  diagData.objetivo=_objOpts[idx];
-  document.querySelectorAll('#diagForm .diag-opt').forEach(function(b){b.classList.remove('selected');});
-  el.classList.add('selected');
-}
-function nextObj(){ if(!diagData.objetivo){alert('Selecciona tu objetivo');return;} renderStep(6); }
-
-// STEP 6
-function renderContacto(c){
-  var html='<div class="diag-label">Nombre completo</div><input class="diag-input" id="cN" placeholder="Juan Garc&#237;a" value="'+diagData.contacto_nombre+'">';
-  html+='<div class="diag-label" style="margin-top:10px">WhatsApp / Tel&#233;fono</div><input class="diag-input" id="cT" placeholder="+1 809 000 0000" value="'+diagData.contacto_tel+'">';
-  html+='<div class="diag-label" style="margin-top:10px">Email (opcional)</div><input class="diag-input" id="cE" placeholder="correo@ejemplo.com" value="'+diagData.contacto_email+'">';
-  c.innerHTML=mkStep('Para enviarte tu plan personalizado','Un asesor te contactar&#225; en menos de 24 horas.',html,5,'nextContacto()','Ver resumen &#8594;');
-}
-function nextContacto(){
-  var n=(document.getElementById('cN')||{}).value||'';
-  var t=(document.getElementById('cT')||{}).value||'';
-  if(!n||!t){alert('Por favor ingresa nombre y tel&#233;fono');return;}
-  diagData.contacto_nombre=n; diagData.contacto_tel=t;
-  diagData.contacto_email=(document.getElementById('cE')||{}).value||'';
-  renderStep(7);
-}
-
-// STEP 7
-function renderResumen(c){
-  setProgress(7);
-  var tC=diagData.deudas.reduce(function(s,d){return s+Number(d.cuota_mensual||0);},0);
-  var tI=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
-  var tF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
-  var tV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
-  var fl=tI-tF-tV-tC; var rt=tI?Math.round((tC/tI)*100):0;
-  var rows='';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Nombre</div><div class="diag-sum-val">'+diagData.contacto_nombre+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Tel&#233;fono</div><div class="diag-sum-val">'+diagData.contacto_tel+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Situaci&#243;n</div><div class="diag-sum-val">'+diagData.situacion.join(', ')+'</div></div>';
-  if(diagData.deudas.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Deudas</div><div class="diag-sum-val">'+diagData.deudas.map(function(d){return d.acreedor+' RD$'+Number(d.monto).toLocaleString()+' &#183; Cuota: RD$'+Number(d.cuota_mensual||0).toLocaleString();}).join('<br>')+'</div></div>';
-  if(tC) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total cuotas/mes</div><div class="diag-sum-val">RD$'+tC.toLocaleString()+'</div></div>';
-  if(diagData.ingresos.length) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Ingresos</div><div class="diag-sum-val">'+diagData.ingresos.map(function(i){return i.tipo+' RD$'+Number(i.monto).toLocaleString()+' '+i.frecuencia;}).join('<br>')+'</div></div>';
-  if(tI) rows+='<div class="diag-sum-row"><div class="diag-sum-label">Total mensual</div><div class="diag-sum-val">RD$'+tI.toLocaleString()+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos fijos</div><div class="diag-sum-val">RD$'+tF.toLocaleString()+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Gastos variables</div><div class="diag-sum-val">RD$'+tV.toLocaleString()+'</div></div>';
-  rows+='<div class="diag-sum-row"><div class="diag-sum-label">Objetivo</div><div class="diag-sum-val">'+diagData.objetivo+'</div></div>';
-  if(tI) rows+='<div class="diag-sum-row" style="background:rgba(58,125,68,.06);border-color:rgba(58,125,68,.3)"><div class="diag-sum-label">Flujo libre</div><div class="diag-sum-val" style="color:'+(fl>=0?'var(--green-light)':'#E74C3C')+';font-weight:700">RD$'+fl.toLocaleString()+' &#183; Ratio: '+rt+'%</div></div>';
-  c.innerHTML='<div class="diag-step"><div class="diag-question">Revisa tu informaci&#243;n</div><div class="diag-hint">Confirma que todo est&#233; correcto antes de enviar.</div><div class="diag-summary">'+rows+'</div><div class="diag-nav"><button class="diag-back" onclick="renderStep(6)">&#8592; Editar</button><button class="diag-next" onclick="submitDiag()">Enviar diagn&#243;stico &#10003;</button></div></div>';
-}
-
-// ── SUBMIT ──
-function submitDiag(){
-  var btn=document.querySelector('#diagForm .diag-next');
-  if(btn){btn.textContent='Enviando...';btn.disabled=true;}
-  var tC=diagData.deudas.reduce(function(s,d){return s+Number(d.cuota_mensual||0);},0);
-  var tI=diagData.ingresos.reduce(function(s,i){return s+Number(i.mensualizado);},0);
-  var tF=diagData.gastos_fijos.reduce(function(s,g){return s+Number(g.monto);},0);
-  var tV=diagData.gastos_variables.reduce(function(s,g){return s+Number(g.monto);},0);
-  var dTxt=diagData.deudas.length?diagData.deudas.map(function(d){return d.acreedor+' RD$'+Number(d.monto).toLocaleString()+' Cuota:RD$'+Number(d.cuota_mensual||0).toLocaleString()+' '+d.estado+' '+d.tasa;}).join(' | '):'Ninguna';
-  var iTxt=diagData.ingresos.length?diagData.ingresos.map(function(i){return i.tipo+' RD$'+Number(i.monto).toLocaleString()+' '+i.frecuencia;}).join(' | '):'Ninguno';
-  var gfTxt=diagData.gastos_fijos.length?diagData.gastos_fijos.map(function(g){return g.categoria+' RD$'+Number(g.monto).toLocaleString();}).join(' | '):'Ninguno';
-  var gvTxt=diagData.gastos_variables.length?diagData.gastos_variables.map(function(g){return g.categoria+' RD$'+Number(g.monto).toLocaleString();}).join(' | '):'Ninguno';
-  var fl='RD$'+(tI-tF-tV-tC).toLocaleString();
-
-  fetch('https://api.web3forms.com/submit',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify({
-      access_key:WEB3_KEY,
-      subject:'FINEXO - Nuevo Lead: '+diagData.contacto_nombre,
-      from_name:'Finexo Advisory Web',
-      NOMBRE:diagData.contacto_nombre, TELEFONO:diagData.contacto_tel,
-      EMAIL:diagData.contacto_email||'N/D', SITUACION:diagData.situacion.join(', '),
-      DEUDAS:dTxt, TOTAL_CUOTAS:'RD$'+tC.toLocaleString(),
-      INGRESOS:iTxt, TOTAL_INGRESOS:'RD$'+tI.toLocaleString(),
-      GASTOS_FIJOS:gfTxt, GASTOS_VARIABLES:gvTxt,
-      TOTAL_GASTOS:'RD$'+(tF+tV).toLocaleString(), FLUJO_LIBRE:fl, OBJETIVO:diagData.objetivo
-    })
-  }).then(function(r){return r.json();}).then(function(d){console.log('W3F:',d.success?'OK':d.message);}).catch(function(e){console.error('W3F:',e);});
-
-  var aiP='Cliente:'+diagData.contacto_nombre+' Tel:'+diagData.contacto_tel+' Situacion:'+diagData.situacion.join(',')+' Deudas:'+dTxt+' TotalCuotas:RD$'+tC+' Ingresos:'+iTxt+' TotalIngresos:RD$'+tI+' GastosFijos:'+gfTxt+' GastosVariables:'+gvTxt+' FlujoLibre:'+fl+' Objetivo:'+diagData.objetivo;
-  var aiS='Eres analista financiero senior de Finexo Advisory Republica Dominicana. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento 4)Flujo libre real 5)Servicio Finexo recomendado con precio en RD$ 6)Estrategia paso a paso 7)Notas para el asesor.';
-  fetch(CF_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:aiS,messages:[{role:'user',content:aiP}]})})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-  .then(function(d){
-    var a=d.content&&d.content[0]?d.content[0].text:'';
-    if(a) {
-      fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({access_key:WEB3_KEY,subject:'FINEXO - Analisis IA: '+diagData.contacto_nombre,from_name:'Finexo IA',CLIENTE:diagData.contacto_nombre,TELEFONO:diagData.contacto_tel,ANALISIS_IA:a})}).catch(function(e){console.error(e);});
-      // Save AI analysis to Supabase
-      if(_supa && _user) {
-        _supa.from('diagnosticos').update({analisis_ia: a}).eq('user_id', _user.id).order('created_at', {ascending:false}).limit(1).then(function(r){
-          if(r.error) console.error('AI update error:', r.error.message);
-          else console.log('AI analysis saved ✓');
-        });
-      }
-    }
-  }).catch(function(e){console.log('AI skip:',e.message);});
-
-  _saveToSupabase({nombre:diagData.contacto_nombre,telefono:diagData.contacto_tel,email:diagData.contacto_email||'',situacion:diagData.situacion.join(', '),deudas:dTxt,ingresos:iTxt,gastos_fijos:gfTxt,gastos_variables:gvTxt,flujo_libre:fl,objetivo:diagData.objetivo});
-
-  setTimeout(function(){showDiagDone();},1000);
-}
-
-function showDiagDone(){
-  setProgress(8);
-  var ref='FIN-'+Date.now().toString(36).toUpperCase();
-  document.getElementById('diagForm').innerHTML='<div class="diag-done-wrap"><div class="diag-done-icon">&#x2705;</div><div class="diag-done-title">&#161;Listo! Informaci&#243;n recibida.</div><div class="diag-done-text">Un asesor de <strong>Finexo Advisory</strong> revisar&#225; tu caso y se comunicar&#225; contigo en las pr&#243;ximas <strong>24 horas</strong> con un plan personalizado.</div><div class="diag-ref">Ref: '+ref+'</div><div style="margin-top:14px"><a href="dashboard.html" style="font-size:13px;color:var(--green-light);text-decoration:none">Ver en mi portal &#8594;</a></div></div>';
-}
-
-function renderReport(r){
-  if(!r||!document.getElementById('reportOutput')) return;
-  var out='<div class="rpt-card"><div class="rpt-hdr"><div><div class="rpt-logo">Finexo<span> Advisory</span></div></div><div class="rpt-meta">'+new Date().toLocaleDateString('es-DO',{day:'2-digit',month:'long',year:'numeric'})+'</div></div>';
-  out+='<div class="rpt-body">';
-  out+='<div class="rpt-sec"><div class="rpt-sec-title">Cliente</div><div class="rpt-text" style="font-size:17px;font-weight:700;color:#0D1F3C">'+(r.nombre_cliente||diagData.contacto_nombre||'N/D')+'</div></div>';
-  if(r.resumen_ejecutivo) out+='<div class="rpt-sec"><div class="rpt-sec-title">Resumen</div><div class="rpt-text">'+r.resumen_ejecutivo+'</div></div>';
-  if(r.notas_asesor) out+='<div class="rpt-sec"><div class="rpt-sec-title">Notas</div><div class="notes-box">'+r.notas_asesor+'</div></div>';
-  if(r.servicio_recomendado) out+='<div class="rpt-sec"><div class="rpt-sec-title">Servicio Recomendado</div><div class="rec-box"><div class="rec-name">'+r.servicio_recomendado+'</div><div class="rec-price">'+(r.precio_estimado||'')+'</div></div></div>';
-  out+='</div><div class="rpt-ftr">Confidencial &#183; Finexo Advisory</div></div>';
-  document.getElementById('reportOutput').innerHTML=out;
-}
-
-// ── SUPABASE AUTH ──
-// Initialize Supabase immediately
-var _supa = _supa; // use global instance
-var _user = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-  // Restore session on page load
-
-  // Handle email confirmation redirect with access_token in URL hash
-  if(window.location.hash && window.location.hash.includes('access_token')) {
-    _supa.auth.getSession().then(function(r) {
-      if(r.data && r.data.session) {
-        _onLogin(r.data.session.user);
-        // Clean URL
-        history.replaceState(null, '', window.location.pathname);
-      }
-    });
-  }
-
-  _supa.auth.getSession().then(function(r) {
-    if(r.data && r.data.session) _onLogin(r.data.session.user);
-  });
-  _supa.auth.onAuthStateChange(function(ev, session) {
-    if(ev === 'SIGNED_IN' || ev === 'TOKEN_REFRESHED') {
-      if(session) _onLogin(session.user);
-    } else if(ev === 'SIGNED_OUT') {
-      _onLogout();
-    }
-  });
-});
-
-// _onLogin removed
-
-
-// _onLogout removed
-
-
-// openAuthModal removed
-
-
-function authTab(n) {
-  document.getElementById('authFrmLogin').style.display = n===0?'block':'none';
-  document.getElementById('authFrmSignup').style.display = n===1?'block':'none';
-  document.getElementById('tabA').classList.toggle('active', n===0);
-  document.getElementById('tabB').classList.toggle('active', n===1);
-  _setMsg('','');
-}
-
-function _setMsg(msg, type) {
-  var el = document.getElementById('authMsg');
-  el.textContent = msg;
-  el.className = 'auth-msg' + (type?' '+type:'');
-}
-
-function _setLoading(id, on) {
-  var el = document.getElementById(id);
-  if(!el) return;
-  el.disabled = on;
-  el.textContent = on ? 'Procesando...' : (id==='aBtnLogin'?'Entrar':'Crear cuenta');
-}
-
-async function doLogin() {
-  var e = document.getElementById('aEmail').value.trim();
-  var p = document.getElementById('aPass').value;
-  if(!e||!p) { _setMsg('Completa todos los campos.','err'); return; }
-  _setLoading('aBtnLogin', true);
-  var r = await _supa.auth.signInWithPassword({email:e, password:p});
-  _setLoading('aBtnLogin', false);
-  if(r.error) _setMsg('Email o contraseña incorrectos.','err');
-  else _onLogin(r.data.user);
-}
-
-async function doSignup() {
-  var name = document.getElementById('aName').value.trim();
-  var e = document.getElementById('aEmailS').value.trim();
-  var p = document.getElementById('aPassS').value;
-  if(!name||!e||!p) { _setMsg('Completa todos los campos.','err'); return; }
-  if(p.length<6) { _setMsg('La contraseña debe tener al menos 6 caracteres.','err'); return; }
-  _setLoading('aBtnSignup', true);
-  var r = await _supa.auth.signUp({email:e, password:p, options:{data:{full_name:name}}});
-  _setLoading('aBtnSignup', false);
-  if(r.error) _setMsg(r.error.message,'err');
-  else _setMsg('¡Cuenta creada! Revisa tu email para confirmar.','ok');
-}
-
-async function doReset() {
-  var e = document.getElementById('aEmail').value.trim();
-  if(!e) { _setMsg('Ingresa tu email primero.','err'); return; }
-  await _supa.auth.resetPasswordForEmail(e, {redirectTo:'https://finexogf-blip.github.io/Finexo'});
-  _setMsg('Te enviamos un link para restablecer tu contraseña.','ok');
-}
-
-async function doLogout() {
-  await _supa.auth.signOut();
-  _onLogout();
-}
-
-function _saveToSupabase(payload) {
-  if(!_supa || !_user) {
-    console.warn('No active session');
-    return;
-  }
-  _supa.from('diagnosticos').insert({
-    user_id: _user.id,
-    nombre: payload.nombre,
-    telefono: payload.telefono,
-    email_cliente: payload.email||'',
-    situacion: payload.situacion,
-    deudas: payload.deudas,
-    ingresos: payload.ingresos,
-    gastos_fijos: payload.gastos_fijos,
-    gastos_variables: payload.gastos_variables,
-    flujo_libre: payload.flujo_libre,
-    objetivo: payload.objetivo
-  }).then(function(result) {
-    if(result.error) {
-      console.error('Save error:', result.error.message);
-    } else {
-      console.log('Saved to Supabase OK');
-      setTimeout(function(){ loadInicio(); }, 600);
-    }
-  });
-}
-
-</script>
-
-
 
 
 <script>
@@ -1454,7 +958,7 @@ document.addEventListener('click', function(e) { if(e.target.id === 'detailModal
 <script>
 function _saveToSupabase(payload) {
   if(!_supa || !_user) {
-    console.warn('No active session - cannot save');
+    _showSaveStatus('Sin sesi&#243;n activa', false);
     return;
   }
   _supa.from('diagnosticos').insert({
@@ -1471,14 +975,21 @@ function _saveToSupabase(payload) {
     objetivo: payload.objetivo
   }).then(function(result) {
     if(result.error) {
-      console.error('Save error:', result.error.message);
+      _showSaveStatus('Error: ' + result.error.message, false);
     } else {
-      console.log('Saved to Supabase from dashboard OK');
-      if(typeof loadInicioDash === 'function') {
-        setTimeout(function(){ loadInicioDash(); }, 500);
-      }
+      _showSaveStatus('&#x2713; Guardado en tu portal', true);
+      setTimeout(function(){ loadInicio(); }, 800);
     }
   });
+}
+
+function _showSaveStatus(msg, ok) {
+  var el = document.getElementById('diagSaveStatus');
+  if(el) {
+    el.textContent = msg;
+    el.style.color = ok ? 'var(--green-light)' : '#E74C3C';
+    el.style.display = 'block';
+  }
 }
 
 // ── FINEXO DIAGNOSTIC FORM ──
@@ -1799,7 +1310,22 @@ function submitDiag(){
 function showDiagDone(){
   setProgress(8);
   var ref='FIN-'+Date.now().toString(36).toUpperCase();
-  document.getElementById('diagForm').innerHTML='<div class="diag-done-wrap"><div class="diag-done-icon">&#x2705;</div><div class="diag-done-title">&#161;Listo! Informaci&#243;n recibida.</div><div class="diag-done-text">Un asesor de <strong>Finexo Advisory</strong> revisar&#225; tu caso y se comunicar&#225; contigo en las pr&#243;ximas <strong>24 horas</strong> con un plan personalizado.</div><div class="diag-ref">Ref: '+ref+'</div><div style="margin-top:14px"><a href="dashboard.html" style="font-size:13px;color:var(--green-light);text-decoration:none">Ver en mi portal &#8594;</a></div></div>';
+  var d=document.getElementById('diagForm');
+  d.innerHTML='';
+  var wrap=document.createElement('div');
+  wrap.className='diag-done-wrap';
+  wrap.innerHTML='<div class="diag-done-icon">&#x2705;</div>'
+    +'<div class="diag-done-title">&#161;Listo! Informaci&#243;n recibida.</div>'
+    +'<div class="diag-done-text">Un asesor revisar&#225; tu caso en las pr&#243;ximas <strong>24 horas</strong>.</div>'
+    +'<div class="diag-ref">Ref: '+ref+'</div>'
+    +'<div id="diagSaveStatus" style="font-size:12px;margin-top:10px;display:none"></div>';
+  var btn=document.createElement('button');
+  btn.textContent='Cerrar ✕';
+  btn.className='save-btn';
+  btn.style.cssText='padding:9px 20px;font-size:13px;margin-top:12px';
+  btn.onclick=closeAgent;
+  wrap.appendChild(btn);
+  d.appendChild(wrap);
 }
 
 function renderReport(r){
