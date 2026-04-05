@@ -957,15 +957,14 @@ document.addEventListener('click', function(e) { if(e.target.id === 'detailModal
 
 <script>
 function _saveToSupabase(payload) {
-  // Show done screen immediately
   showDiagDone();
-  
   if(!_supa || !_user) {
-    console.warn('No session');
+    alert('ERROR: No hay sesion activa. _supa=' + !!_supa + ' _user=' + !!_user);
     return;
   }
+  var uid = _user.id;
   _supa.from('diagnosticos').insert({
-    user_id: _user.id,
+    user_id: uid,
     nombre: payload.nombre,
     telefono: payload.telefono,
     email_cliente: payload.email||'',
@@ -979,13 +978,15 @@ function _saveToSupabase(payload) {
   }).then(function(result) {
     var statusEl = document.getElementById('diagSaveStatus');
     if(result.error) {
-      console.error('Save error:', result.error.message);
-      if(statusEl) { statusEl.textContent = 'Error: ' + result.error.message; statusEl.style.color='#E74C3C'; statusEl.style.display='block'; }
+      alert('DB ERROR: ' + result.error.message + ' | code: ' + result.error.code);
+      if(statusEl) { statusEl.textContent='Error: '+result.error.message; statusEl.style.color='#E74C3C'; statusEl.style.display='block'; }
     } else {
-      console.log('Saved OK, user_id:', _user.id);
-      if(statusEl) { statusEl.textContent = '\u2713 Guardado en tu portal'; statusEl.style.color='var(--green-light)'; statusEl.style.display='block'; }
+      alert('GUARDADO OK. user_id: ' + uid.substring(0,8));
+      if(statusEl) { statusEl.textContent='\u2713 Guardado'; statusEl.style.color='var(--green-light)'; statusEl.style.display='block'; }
       setTimeout(function(){ loadInicio(); }, 1500);
     }
+  }).catch(function(e){
+    alert('EXCEPCION: ' + e.message);
   });
 }
 
