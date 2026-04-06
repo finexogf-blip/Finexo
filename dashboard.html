@@ -69,8 +69,8 @@ body{font-family:'Outfit',sans-serif;background:var(--navy);color:var(--white);m
 
 /* MAIN */
 .main{margin-left:240px;min-height:100vh;padding:30px 34px;}
-.page{display:none;animation:fadeIn .25s ease;}
-.page.active{display:block;}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn .25s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .page-hdr{margin-bottom:28px;}
 .page-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--white);margin-bottom:3px;}
@@ -557,8 +557,6 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
       </div>
     </div>
 
-  </main>
-</div>
 
     <!-- ADMIN: PERFIL DE USUARIO -->
     <div class="page" id="page-admin-perfil">
@@ -686,6 +684,9 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
       </div>
     </div>
 
+
+  </main>
+</div>
 
 <!-- DETAIL MODAL -->
 <div class="detail-overlay" id="detailModal">
@@ -1653,12 +1654,15 @@ async function adminVerPerfil(userId, nombre, email) {
   var pr = await _supa.from('perfiles').select('*').eq('id', userId).single();
   _adminPerfilDatos = pr.data || {};
   _fillAdminPerfil(_adminPerfilDatos);
-  _updateValidadoBadge(_adminPerfilDatos.datos_validados);
+  _updateValidadoBadge(_adminPerfilDatos ? _adminPerfilDatos.datos_validados : false);
+  window._latestAutoScores = {ratio_deuda:0, flujo_libre:0, gastos:0};
   // Load latest diag for auto score calculation
   _supa.from('diagnosticos').select('*').eq('user_id', userId).order('created_at', {ascending:false}).limit(1).then(function(dr){
-    window._latestAutoScores = (dr.data && dr.data.length > 0) ? calcScoreAutomatico(dr.data[0]) : {ratio_deuda:0,flujo_libre:0,gastos:0};
+    if(dr.data && dr.data.length > 0) {
+      window._latestAutoScores = calcScoreAutomatico(dr.data[0]);
+    }
     previewScore();
-  });
+  }).catch(function(){ previewScore(); });
 }
 
 function _fillAdminPerfil(p) {
