@@ -442,6 +442,9 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
       <button class="nav-item admin-only" style="display:none" onclick="goPage('admin-users')" data-page="admin-users">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Usuarios
       </button>
+      <button class="nav-item admin-only" style="display:none" id="navAdminPerfil" onclick="goPage('admin-perfil')" data-page="admin-perfil">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Perfil de cliente
+      </button>
     </nav>
     <div class="sb-footer">
       <a href="index.html" class="btn-sb">
@@ -556,6 +559,133 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
 
   </main>
 </div>
+
+    <!-- ADMIN: PERFIL DE USUARIO -->
+    <div class="page" id="page-admin-perfil">
+      <div class="page-hdr" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <button onclick="goPage('admin-users')" style="background:transparent;border:none;color:rgba(255,255,255,0.4);font-family:Outfit,sans-serif;font-size:13px;cursor:pointer;padding:0;margin-bottom:8px">&#8592; Volver a usuarios</button>
+          <div class="page-title" id="adminPerfilTitle">Perfil del cliente</div>
+          <div class="page-sub" id="adminPerfilEmail"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span id="adminValidadoBadge" style="font-size:12px;padding:4px 12px;border-radius:20px;display:none"></span>
+          <button class="save-btn" id="adminValidarBtn" onclick="adminToggleValidar()" style="padding:8px 18px;font-size:12px">&#x2713; Validar datos</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+
+        <!-- Perfil datos personales -->
+        <div class="card">
+          <div class="card-title">Datos personales</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="form-group"><label>Nombre completo</label><input type="text" id="apNombre" placeholder="Juan Garc&#237;a"></div>
+            <div class="form-group"><label>C&#233;dula</label><input type="text" id="apCedula" placeholder="001-1234567-8"></div>
+            <div class="form-group"><label>Tel&#233;fono</label><input type="text" id="apTelefono" placeholder="+1 809 000 0000"></div>
+            <div class="form-group"><label>Fecha de nacimiento</label><input type="date" id="apFechaNac"></div>
+            <div class="form-group"><label>Ocupaci&#243;n</label><input type="text" id="apOcupacion"></div>
+            <div class="form-group"><label>Lugar de trabajo</label><input type="text" id="apTrabajo"></div>
+            <div class="form-group"><label>Ingreso mensual</label>
+              <select id="apIngreso">
+                <option value="">Selecciona...</option>
+                <option>Menos de RD$25,000</option>
+                <option>RD$25,000 &#8211; 50,000</option>
+                <option>RD$50,000 &#8211; 100,000</option>
+                <option>RD$100,000 &#8211; 200,000</option>
+                <option>M&#225;s de RD$200,000</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Direcci&#243;n</label><input type="text" id="apDireccion"></div>
+            <div class="form-group"><label>Ciudad</label><input type="text" id="apCiudad"></div>
+            <div class="form-group"><label>Provincia</label><input type="text" id="apProvincia"></div>
+          </div>
+          <button class="save-btn" style="margin-top:14px;width:100%" onclick="adminSavePerfil()">Guardar datos del perfil</button>
+          <div class="save-msg" id="apMsg"></div>
+        </div>
+
+        <!-- Scoring panel -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Datos para scoring</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="form-group">
+                <label>Tipo de empleo</label>
+                <select id="apTipoEmpleo" onchange="previewScore()">
+                  <option value="">Selecciona...</option>
+                  <option>Empleado formal</option>
+                  <option>Empleado informal</option>
+                  <option>Independiente/Freelance</option>
+                  <option>Empresario</option>
+                  <option>Rentista</option>
+                  <option>Sin empleo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tiempo en empleo actual</label>
+                <select id="apTiempoEmpleo" onchange="previewScore()">
+                  <option value="">Selecciona...</option>
+                  <option>Menos de 6 meses</option>
+                  <option>6-12 meses</option>
+                  <option>1-3 a&#241;os</option>
+                  <option>3-5 a&#241;os</option>
+                  <option>M&#225;s de 5 a&#241;os</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Historial de pagos declarado</label>
+                <select id="apHistorial" onchange="previewScore()">
+                  <option value="">Selecciona...</option>
+                  <option>Siempre al d&#237;a</option>
+                  <option>Alguna mora menor</option>
+                  <option>Moras frecuentes</option>
+                  <option>En mora actualmente</option>
+                </select>
+              </div>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <span style="font-size:13px;font-weight:600">DataCr&#233;dito / TransUnion</span>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" id="apChkDC" onchange="toggleApExt(0)"> Disponible
+                  </label>
+                </div>
+                <input class="form-group input" id="apValDC" type="number" placeholder="Score (300-850)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:10px 13px;color:var(--white);font-family:Outfit,sans-serif;font-size:13px;outline:none;opacity:0.4" disabled oninput="previewScore()">
+              </div>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <span style="font-size:13px;font-weight:600">ProUsuario</span>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+                    <input type="checkbox" id="apChkPU" onchange="toggleApExt(1)"> Disponible
+                  </label>
+                </div>
+                <input class="form-group input" id="apValPU" type="number" placeholder="Score (0-999)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:10px 13px;color:var(--white);font-family:Outfit,sans-serif;font-size:13px;outline:none;opacity:0.4" disabled oninput="previewScore()">
+              </div>
+              <div class="form-group">
+                <label>Puntos Finexo (0-70) <span style="color:rgba(255,255,255,0.3);font-size:10px">Validaci&#243;n manual</span></label>
+                <input type="number" id="apScoreFinexo" min="0" max="70" placeholder="0" oninput="previewScore()" style="font-size:16px;padding:12px">
+              </div>
+              <div class="form-group">
+                <label>Notas de scoring <span style="color:rgba(255,255,255,0.3);font-size:10px">(solo admin)</span></label>
+                <textarea id="apNotasScoring" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:10px 13px;color:var(--white);font-family:Outfit,sans-serif;font-size:13px;outline:none;resize:vertical;min-height:60px" placeholder="Observaciones del asesor..."></textarea>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:rgba(255,255,255,0.5)">
+                  <input type="checkbox" id="apMostrarScore"> Mostrar score al cliente
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score preview -->
+          <div id="apScorePreview" style="margin-bottom:16px"></div>
+
+          <button class="save-btn" style="width:100%;background:linear-gradient(135deg,var(--gold),#9a7a2a)" onclick="adminCalcScore()">&#x1F4CA; Calcular y guardar score</button>
+          <div class="save-msg" id="apScoreMsg"></div>
+        </div>
+
+      </div>
+    </div>
+
 
 <!-- DETAIL MODAL -->
 <div class="detail-overlay" id="detailModal">
@@ -873,7 +1003,7 @@ async function loadUsers() {
     html += '<td style="font-size:11px;color:var(--gray)">'+u.email+'</td>';
     html += '<td style="font-size:11px">'+fecha+'</td>';
     html += '<td style="text-align:center">'+(cmap[u.id]||0)+'</td>';
-    html += '<td><button class="btn-sm" style="border-color:rgba(200,169,81,0.3);color:var(--gold)" data-uid="'+u.id+'" onclick="openUserScore(this.dataset.uid)">&#x1F4CA; Score</button></td>';
+    html += '<td><button class="btn-sm" style="border-color:rgba(58,125,68,0.3);color:var(--green-light)" data-uid="'+u.id+'" data-email="'+u.email+'" data-nombre="'+(u.nombre||'Sin nombre')+'" onclick="adminVerPerfil(this.dataset.uid, this.dataset.nombre, this.dataset.email)">&#x1F464; Ver perfil</button></td>';
     html += '<td><select class="role-sel" id="role-'+u.id+'">';
     html += '<option value="cliente"'+(rol==='cliente'?' selected':'')+'>Cliente</option>';
     html += '<option value="admin"'+(rol==='admin'?' selected':'')+'>Admin</option>';
@@ -1501,6 +1631,272 @@ async function openUserScore(userId) {
   await openScorePanel(userId, diagId);
 }
 
+
+// ── ADMIN: VER PERFIL DE CLIENTE ──
+var _adminPerfilUserId = null;
+var _adminPerfilDatos = null;
+
+async function adminVerPerfil(userId, nombre, email) {
+  _adminPerfilUserId = userId;
+  
+  // Update nav and header
+  document.getElementById('adminPerfilTitle').textContent = nombre || 'Perfil del cliente';
+  document.getElementById('adminPerfilEmail').textContent = email || '';
+  
+  // Show/hide nav item
+  var navBtn = document.getElementById('navAdminPerfil');
+  if(navBtn) navBtn.style.display = '';
+  
+  goPage('admin-perfil');
+  
+  // Load perfil
+  var pr = await _supa.from('perfiles').select('*').eq('id', userId).single();
+  _adminPerfilDatos = pr.data || {};
+  _fillAdminPerfil(_adminPerfilDatos);
+  _updateValidadoBadge(_adminPerfilDatos.datos_validados);
+  // Load latest diag for auto score calculation
+  _supa.from('diagnosticos').select('*').eq('user_id', userId).order('created_at', {ascending:false}).limit(1).then(function(dr){
+    window._latestAutoScores = (dr.data && dr.data.length > 0) ? calcScoreAutomatico(dr.data[0]) : {ratio_deuda:0,flujo_libre:0,gastos:0};
+    previewScore();
+  });
+}
+
+function _fillAdminPerfil(p) {
+  var map = {
+    apNombre:'nombre_completo', apCedula:'cedula', apTelefono:'telefono',
+    apFechaNac:'fecha_nacimiento', apOcupacion:'ocupacion', apTrabajo:'lugar_trabajo',
+    apIngreso:'ingreso_mensual', apDireccion:'direccion', apCiudad:'ciudad',
+    apProvincia:'provincia', apTipoEmpleo:'tipo_empleo', apTiempoEmpleo:'tiempo_empleo',
+    apHistorial:'historial_pagos', apNotasScoring:'notas_scoring'
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el && p[map[id]]) el.value = p[map[id]];
+    else if(el) el.value = '';
+  });
+  // Checkboxes
+  var chkDC = document.getElementById('apChkDC');
+  var chkPU = document.getElementById('apChkPU');
+  var valDC = document.getElementById('apValDC');
+  var valPU = document.getElementById('apValPU');
+  if(chkDC) chkDC.checked = !!p.tiene_datacredito;
+  if(chkPU) chkPU.checked = !!p.tiene_prousuario;
+  if(valDC) { valDC.value = p.valor_datacredito||''; valDC.disabled = !p.tiene_datacredito; valDC.style.opacity = p.tiene_datacredito?'1':'0.4'; }
+  if(valPU) { valPU.value = p.valor_prousuario||''; valPU.disabled = !p.tiene_prousuario; valPU.style.opacity = p.tiene_prousuario?'1':'0.4'; }
+  var sfEl = document.getElementById('apScoreFinexo');
+  if(sfEl) sfEl.value = p.score_finexo||0;
+  var msEl = document.getElementById('apMostrarScore');
+  if(msEl) msEl.checked = !!p.mostrar_score_cliente;
+}
+
+function _updateValidadoBadge(validado) {
+  var badge = document.getElementById('adminValidadoBadge');
+  var btn = document.getElementById('adminValidarBtn');
+  if(badge) {
+    badge.style.display = 'inline-block';
+    badge.textContent = validado ? '\u2713 Datos validados' : '\u26A0 Sin validar';
+    badge.style.background = validado ? 'rgba(58,125,68,0.15)' : 'rgba(231,76,60,0.1)';
+    badge.style.color = validado ? 'var(--green-light)' : '#E74C3C';
+    badge.style.border = validado ? '1px solid rgba(58,125,68,0.3)' : '1px solid rgba(231,76,60,0.2)';
+  }
+  if(btn) {
+    btn.textContent = validado ? '\u2715 Quitar validaci\u00f3n' : '\u2713 Validar datos';
+    btn.style.background = validado ? 'rgba(231,76,60,0.2)' : 'linear-gradient(135deg,var(--green),#2A5C32)';
+  }
+}
+
+async function adminToggleValidar() {
+  if(!_adminPerfilUserId) return;
+  var current = _adminPerfilDatos ? !!_adminPerfilDatos.datos_validados : false;
+  var newVal = !current;
+  await _supa.from('perfiles').upsert({
+    id: _adminPerfilUserId,
+    datos_validados: newVal,
+    validado_por: _user.id,
+    validado_at: new Date().toISOString()
+  });
+  if(_adminPerfilDatos) _adminPerfilDatos.datos_validados = newVal;
+  _updateValidadoBadge(newVal);
+  previewScore();
+}
+
+async function adminSavePerfil() {
+  if(!_adminPerfilUserId) return;
+  var data = {
+    id: _adminPerfilUserId,
+    nombre_completo: document.getElementById('apNombre').value.trim(),
+    cedula: document.getElementById('apCedula').value.trim(),
+    telefono: document.getElementById('apTelefono').value.trim(),
+    fecha_nacimiento: document.getElementById('apFechaNac').value || null,
+    ocupacion: document.getElementById('apOcupacion').value.trim(),
+    lugar_trabajo: document.getElementById('apTrabajo').value.trim(),
+    ingreso_mensual: document.getElementById('apIngreso').value,
+    direccion: document.getElementById('apDireccion').value.trim(),
+    ciudad: document.getElementById('apCiudad').value.trim(),
+    provincia: document.getElementById('apProvincia').value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  var r = await _supa.from('perfiles').upsert(data);
+  var msg = document.getElementById('apMsg');
+  if(r.error) { msg.textContent = 'Error: '+r.error.message; msg.className='save-msg err'; }
+  else { if(_adminPerfilDatos) Object.assign(_adminPerfilDatos, data); msg.textContent='\u2713 Perfil guardado'; msg.className='save-msg ok'; setTimeout(function(){ msg.style.display='none'; },3000); }
+}
+
+function toggleApExt(type) {
+  var chk = document.getElementById(type===0?'apChkDC':'apChkPU');
+  var inp = document.getElementById(type===0?'apValDC':'apValPU');
+  if(!chk||!inp) return;
+  inp.disabled = !chk.checked;
+  inp.style.opacity = chk.checked ? '1' : '0.4';
+  previewScore();
+}
+
+function calcPerfilScore() {
+  var tipo = (document.getElementById('apTipoEmpleo')||{}).value||'';
+  var tiempo = (document.getElementById('apTiempoEmpleo')||{}).value||'';
+  var hist = (document.getElementById('apHistorial')||{}).value||'';
+  var hasDC = (document.getElementById('apChkDC')||{}).checked||false;
+  var valDC = (document.getElementById('apValDC')||{}).value||'0';
+  var hasPU = (document.getElementById('apChkPU')||{}).checked||false;
+  var valPU = (document.getElementById('apValPU')||{}).value||'0';
+  var finexoPts = parseInt((document.getElementById('apScoreFinexo')||{}).value)||0;
+  var validado = _adminPerfilDatos ? !!_adminPerfilDatos.datos_validados : false;
+
+  // Get latest diag scores if available
+  var autoS = window._latestAutoScores || {ratio_deuda:0, flujo_libre:0, gastos:0};
+  
+  var sEst = getScoreEstabilidad(tipo, tiempo);
+  var sHist = getScoreHistorial(hist);
+  var sDC = hasDC ? getScoreDatacredito(valDC) : 0;
+  var sPU = hasPU ? getScoreProusuario(valPU) : 0;
+  var sFinexo = Math.min(70, Math.max(0, finexoPts));
+
+  var scoreObj = {
+    ratio_deuda: autoS.ratio_deuda,
+    flujo_libre: autoS.flujo_libre,
+    gastos: autoS.gastos,
+    estabilidad: sEst,
+    historial: sHist,
+    datacredito: sDC,
+    prousuario: sPU,
+    finexo: sFinexo
+  };
+
+  var total = calcScoreTotal(scoreObj, validado);
+  var nivel = scoreNivel(total);
+  return {scoreObj: scoreObj, total: total, nivel: nivel, validado: validado,
+    tipo: tipo, tiempo: tiempo, hist: hist, hasDC: hasDC,
+    valDC: parseInt(valDC)||null, hasPU: hasPU, valPU: parseInt(valPU)||null,
+    finexo: sFinexo, notas: (document.getElementById('apNotasScoring')||{}).value||''};
+}
+
+function previewScore() {
+  var s = calcPerfilScore();
+  var html = '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+  html += '<span style="font-size:13px;font-weight:600">Score Finexo</span>';
+  html += '<div><span style="font-family:Cormorant Garamond,serif;font-size:36px;font-weight:700;color:'+s.nivel.color+'">'+s.total+'</span><span style="color:rgba(255,255,255,0.3);font-size:13px"> / 500</span></div>';
+  html += '</div>';
+  html += '<div style="height:8px;background:rgba(255,255,255,0.07);border-radius:4px;margin-bottom:8px;overflow:hidden"><div style="height:100%;width:'+Math.round((s.total/500)*100)+'%;background:'+s.nivel.color+';border-radius:4px;transition:width .4s"></div></div>';
+  html += '<div style="display:flex;justify-content:space-between;margin-bottom:12px">';
+  html += '<span style="font-size:11px;color:rgba(255,255,255,0.4)">'+(s.validado?'\u2713 Datos validados':'\u26A0 Sin validar (-15%)')+'</span>';
+  html += '<span style="font-size:13px;font-weight:700;color:'+s.nivel.color+'">'+s.nivel.nivel+'</span>';
+  html += '</div>';
+  // Breakdown
+  var breakdown = [
+    ['Ratio deuda/ingreso', s.scoreObj.ratio_deuda, 80],
+    ['Flujo libre', s.scoreObj.flujo_libre, 80],
+    ['Control gastos', s.scoreObj.gastos, 60],
+    ['Estabilidad laboral', s.scoreObj.estabilidad, 60],
+    ['Historial pagos', s.scoreObj.historial, 60],
+    ['DataCr\u00e9dito', s.scoreObj.datacredito, 50],
+    ['ProUsuario', s.scoreObj.prousuario, 40],
+    ['Validaci\u00f3n Finexo', s.scoreObj.finexo, 70]
+  ];
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px">';
+  breakdown.forEach(function(b){
+    var col = b[1]>0 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)';
+    html += '<div style="font-size:11px;color:rgba(255,255,255,0.45);display:flex;justify-content:space-between;padding:2px 0">';
+    html += '<span>'+b[0]+'</span><span style="color:'+col+'">'+b[1]+'/'+b[2]+'</span></div>';
+  });
+  html += '</div></div>';
+  var el = document.getElementById('apScorePreview');
+  if(el) el.innerHTML = html;
+}
+
+async function adminCalcScore() {
+  if(!_adminPerfilUserId) return;
+  
+  // Load latest diag for auto scores
+  var dr = await _supa.from('diagnosticos').select('*').eq('user_id', _adminPerfilUserId).order('created_at', {ascending:false}).limit(1);
+  if(dr.data && dr.data.length > 0) {
+    window._latestAutoScores = calcScoreAutomatico(dr.data[0]);
+  } else {
+    window._latestAutoScores = {ratio_deuda:0, flujo_libre:0, gastos:0};
+  }
+  
+  var s = calcPerfilScore();
+  
+  // Save scoring data to perfiles
+  var data = {
+    id: _adminPerfilUserId,
+    tipo_empleo: s.tipo,
+    tiempo_empleo: s.tiempo,
+    historial_pagos: s.hist,
+    tiene_datacredito: s.hasDC,
+    valor_datacredito: s.hasDC ? s.valDC : null,
+    tiene_prousuario: s.hasPU,
+    valor_prousuario: s.hasPU ? s.valPU : null,
+    score_finexo: s.finexo,
+    notas_scoring: s.notas,
+    score_total: s.total,
+    score_nivel: s.nivel.nivel,
+    mostrar_score_cliente: (document.getElementById('apMostrarScore')||{}).checked||false,
+    updated_at: new Date().toISOString()
+  };
+  
+  var r = await _supa.from('perfiles').upsert(data);
+  
+  // Also save to scores table for history
+  if(!r.error) {
+    var scoreData = {
+      user_id: _adminPerfilUserId,
+      score_ratio_deuda: s.scoreObj.ratio_deuda,
+      score_flujo_libre: s.scoreObj.flujo_libre,
+      score_gastos: s.scoreObj.gastos,
+      score_estabilidad_laboral: s.scoreObj.estabilidad,
+      score_historial_pagos: s.scoreObj.historial,
+      score_datacredito: s.scoreObj.datacredito,
+      tiene_datacredito: s.hasDC,
+      valor_datacredito: s.hasDC ? s.valDC : null,
+      score_prousuario: s.scoreObj.prousuario,
+      tiene_prousuario: s.hasPU,
+      valor_prousuario: s.hasPU ? s.valPU : null,
+      score_validado_finexo: s.finexo,
+      notas_scoring: s.notas,
+      tipo_empleo: s.tipo,
+      tiempo_empleo: s.tiempo,
+      historial_pagos: s.hist,
+      score_total: s.total,
+      nivel: s.nivel.nivel,
+      datos_cliente_validados: s.validado,
+      validado_por: _user.id,
+      validado_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    if(dr.data && dr.data.length > 0) scoreData.diagnostico_id = dr.data[0].id;
+    await _supa.from('scores').insert(scoreData);
+  }
+  
+  var msg = document.getElementById('apScoreMsg');
+  if(r.error) { msg.textContent = 'Error: '+r.error.message; msg.className='save-msg err'; }
+  else {
+    if(_adminPerfilDatos) Object.assign(_adminPerfilDatos, data);
+    msg.textContent = '\u2713 Score guardado: '+s.total+'/500 ('+s.nivel.nivel+')';
+    msg.className = 'save-msg ok';
+    setTimeout(function(){ msg.style.display='none'; }, 4000);
+  }
+}
 
 async function _loadClientPerfil(userId) {
   var r = await _supa.from('perfiles').select('*').eq('id', userId).single();
