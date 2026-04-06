@@ -548,7 +548,7 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
       <div class="page-hdr"><div class="page-title">Usuarios</div><div class="page-sub">Administra roles y accesos</div></div>
       <div class="card">
         <div class="table-wrap"><table>
-          <thead><tr><th>Nombre</th><th>Email</th><th>Registro</th><th>Solicitudes</th><th>Rol</th><th></th></tr></thead>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Registro</th><th>Solicitudes</th><th>Score</th><th>Rol</th><th></th></tr></thead>
           <tbody id="usersBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">&#128101;</div><div>Cargando...</div></div></td></tr></tbody>
         </table></div>
       </div>
@@ -873,6 +873,7 @@ async function loadUsers() {
     html += '<td style="font-size:11px;color:var(--gray)">'+u.email+'</td>';
     html += '<td style="font-size:11px">'+fecha+'</td>';
     html += '<td style="text-align:center">'+(cmap[u.id]||0)+'</td>';
+    html += '<td><button class="btn-sm" style="border-color:rgba(200,169,81,0.3);color:var(--gold)" data-uid="'+u.id+'" onclick="openUserScore(this.dataset.uid)">&#x1F4CA; Score</button></td>';
     html += '<td><select class="role-sel" id="role-'+u.id+'">';
     html += '<option value="cliente"'+(rol==='cliente'?' selected':'')+'>Cliente</option>';
     html += '<option value="admin"'+(rol==='admin'?' selected':'')+'>Admin</option>';
@@ -928,7 +929,29 @@ function renderDetailHTML(item, isAdmin) {
     html += '<div class="detail-row"><div class="detail-lbl">An&#225;lisis IA</div><div class="detail-val" style="white-space:pre-wrap;font-size:12px;line-height:1.7">'+item.analisis_ia+'</div></div>';
   }
   if(isAdmin) {
-    html += '<div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">';
+    // Load client profile async and inject
+    _loadClientPerfil(item.user_id).then(function(perfil) {
+      var pEl = document.getElementById('adminPerfilSection');
+      if(!pEl) return;
+      if(!perfil) { pEl.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,0.3)">Sin datos de perfil</div>'; return; }
+      var fields = [
+        ['C\u00e9dula', perfil.cedula], ['Tel\u00e9fono', perfil.telefono],
+        ['Ocupaci\u00f3n', perfil.ocupacion], ['Trabajo', perfil.lugar_trabajo],
+        ['Ingresos', perfil.ingreso_mensual], ['Ciudad', perfil.ciudad],
+        ['Provincia', perfil.provincia], ['Direcci\u00f3n', perfil.direccion]
+      ];
+      var ph = '';
+      fields.forEach(function(f){ if(f[1]) ph+='<div class="detail-row" style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><div class="detail-lbl">'+f[0]+'</div><div class="detail-val" style="font-size:12px">'+f[1]+'</div></div>'; });
+      var validado = perfil.datos_validados;
+      ph += '<div style="margin-top:10px;display:flex;align-items:center;gap:10px">';
+      ph += '<span style="font-size:12px;color:'+(validado?'var(--green-light)':'rgba(255,255,255,0.4)')+'">'+( validado?'&#x2713; Datos validados':'&#x26A0; Sin validar')+'</span>';
+      ph += '<button class="btn-sm" style="'+(validado?'border-color:rgba(231,76,60,0.3)':'border-color:rgba(58,125,68,0.3)')+'" data-uid="'+item.user_id+'" onclick="toggleValidarPerfil(this.dataset.uid, this)">'+(validado?'Quitar validaci\u00f3n':'&#x2713; Validar datos')+'</button>';
+      ph += '</div>';
+      pEl.innerHTML = ph;
+    });
+    html += '<div class="card-title" style="margin-bottom:8px">Perfil del cliente</div>';
+    html += '<div id="adminPerfilSection" style="margin-bottom:16px;min-height:40px"><div style="font-size:12px;color:rgba(255,255,255,0.3)">Cargando...</div></div>';
+    html += '<div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:10px"></div>';
     html += '<div class="card-title" style="margin-bottom:10px">Acciones del asesor</div>';
     html += '<label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Cambiar estatus</label>';
     html += '<select class="status-sel" id="detailSt">';
@@ -940,7 +963,8 @@ function renderDetailHTML(item, isAdmin) {
     html += '<textarea class="notes-ta" id="detailNotes">'+(item.notas_admin||'')+'</textarea>';
     html += '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">';
     html += '<button class="update-btn" data-id="'+item.id+'" onclick="updateSol(this.dataset.id)">Guardar cambios</button>';
-    html += '<button class="update-btn" style="background:linear-gradient(135deg,#1a6b8a,#0d4a6b)" data-id="'+item.id+'" onclick="generateAI(this.dataset.id)" id="btnGenAI">&#x2728; Generar an&#225;lisis IA</button>';
+    html += '<button class="update-btn" style="background:linear-gradient(135deg,#1a6b8a,#0d4a6b)" data-id="'+item.id+'" onclick="generateAI(this.dataset.id)" id="btnGenAI">&#x2728; Generar IA</button>';
+    html += '<button class="update-btn" style="background:linear-gradient(135deg,var(--gold),#9a7a2a)" data-uid="'+item.user_id+'" data-id="'+item.id+'" onclick="openScorePanel(this.dataset.uid, this.dataset.id)">&#x1F4CA; Score</button>';
     html += '<button class="update-btn" style="background:linear-gradient(135deg,#5a3e9b,#3a2468)" data-id="'+item.id+'" onclick="exportSol(this.dataset.id)">&#x2B73; Exportar</button>';
     html += '<span class="update-ok" id="updateOk">&#x2713; Guardado</span></div>';
     if(item.analisis_ia) {
@@ -1057,6 +1081,449 @@ function exportSol(id) {
   URL.revokeObjectURL(url);
 }
 
+
+// ── SCORING SYSTEM ──
+
+function calcScoreAutomatico(diag) {
+  var scores = {ratio_deuda:0, flujo_libre:0, gastos:0};
+  
+  // Parse ingresos total mensual
+  var tI = 0;
+  if(diag.ingresos) {
+    var parts = diag.ingresos.split(' | ');
+    parts.forEach(function(p){ 
+      var m = p.match(/RD\$|US\$\s*([\d,]+)/);
+      if(m) tI += parseFloat(m[1].replace(/,/g,''))||0;
+    });
+  }
+  
+  // Parse cuotas total
+  var tC = 0;
+  if(diag.deudas && diag.deudas !== 'Ninguna') {
+    var dparts = diag.deudas.split(' | ');
+    dparts.forEach(function(p){
+      var m = p.match(/Cuota:[A-Z$\s]*([\d,]+)/);
+      if(m) tC += parseFloat(m[1].replace(/,/g,''))||0;
+    });
+  }
+
+  // Parse flujo libre
+  var fl = 0;
+  if(diag.flujo_libre) {
+    var fm = diag.flujo_libre.match(/([\d,.-]+)/);
+    if(fm) fl = parseFloat(fm[1].replace(/,/g,''))||0;
+  }
+
+  // Parse gastos
+  var tG = 0;
+  if(diag.gastos_fijos && diag.gastos_fijos !== 'Ninguno') {
+    var gparts = diag.gastos_fijos.split(' | ');
+    gparts.forEach(function(p){ var m=p.match(/([\d,]+)$/); if(m) tG+=parseFloat(m[1].replace(/,/g,''))||0; });
+  }
+  if(diag.gastos_variables && diag.gastos_variables !== 'Ninguno') {
+    var gvparts = diag.gastos_variables.split(' | ');
+    gvparts.forEach(function(p){ var m=p.match(/([\d,]+)$/); if(m) tG+=parseFloat(m[1].replace(/,/g,''))||0; });
+  }
+
+  // Score ratio deuda/ingreso (0-80)
+  if(tI > 0) {
+    var ratio = tC / tI;
+    if(ratio <= 0.20) scores.ratio_deuda = 80;
+    else if(ratio <= 0.30) scores.ratio_deuda = 65;
+    else if(ratio <= 0.40) scores.ratio_deuda = 45;
+    else if(ratio <= 0.50) scores.ratio_deuda = 25;
+    else if(ratio <= 0.65) scores.ratio_deuda = 10;
+    else scores.ratio_deuda = 0;
+  } else if(tC === 0) {
+    scores.ratio_deuda = 80;
+  }
+
+  // Score flujo libre (0-80)
+  if(fl > 0 && tI > 0) {
+    var flRatio = fl / tI;
+    if(flRatio >= 0.40) scores.flujo_libre = 80;
+    else if(flRatio >= 0.25) scores.flujo_libre = 60;
+    else if(flRatio >= 0.15) scores.flujo_libre = 40;
+    else if(flRatio >= 0.05) scores.flujo_libre = 20;
+    else scores.flujo_libre = 5;
+  } else if(fl < 0) {
+    scores.flujo_libre = 0;
+  }
+
+  // Score gastos (0-60)
+  if(tI > 0 && tG > 0) {
+    var gRatio = tG / tI;
+    if(gRatio <= 0.40) scores.gastos = 60;
+    else if(gRatio <= 0.55) scores.gastos = 45;
+    else if(gRatio <= 0.70) scores.gastos = 25;
+    else scores.gastos = 5;
+  } else if(tG === 0) {
+    scores.gastos = 60;
+  }
+
+  return scores;
+}
+
+function calcScoreTotal(scoreObj, validado) {
+  var base = (scoreObj.ratio_deuda||0) + (scoreObj.flujo_libre||0) + 
+             (scoreObj.gastos||0) + (scoreObj.estabilidad||0) + 
+             (scoreObj.historial||0) + (scoreObj.datacredito||0) + 
+             (scoreObj.prousuario||0) + (scoreObj.finexo||0);
+  // Si datos no validados, reducir por 15%
+  var total = validado ? base : Math.round(base * 0.85);
+  return Math.min(500, Math.max(0, total));
+}
+
+function scoreNivel(total) {
+  if(total >= 451) return {nivel:'Excelente', color:'#2ECC71'};
+  if(total >= 351) return {nivel:'Bueno', color:'var(--green-light)'};
+  if(total >= 251) return {nivel:'Aceptable', color:'var(--gold)'};
+  if(total >= 151) return {nivel:'Medio', color:'#E67E22'};
+  return {nivel:'Alto Riesgo', color:'#E74C3C'};
+}
+
+// ── ADMIN: SCORING PANEL ──
+var _currentScoreUserId = null;
+var _currentScoreDiagId = null;
+var _currentScoreData = null;
+
+async function openScorePanel(userId, diagId) {
+  _currentScoreUserId = userId;
+  _currentScoreDiagId = diagId;
+  
+  // Load existing score
+  var sr = await _supa.from('scores').select('*').eq('user_id', userId).eq('diagnostico_id', diagId).single();
+  _currentScoreData = sr.data || null;
+  
+  // Load diag data for auto-calc
+  var dr = await _supa.from('diagnosticos').select('*').eq('id', diagId).single();
+  var diag = dr.data || {};
+  
+  // Load perfil validation status
+  var pr = await _supa.from('perfiles').select('datos_validados, notas_validacion').eq('id', userId).single();
+  var perfil = pr.data || {};
+  
+  // Auto-calc scores from diag
+  var autoScores = calcScoreAutomatico(diag);
+  
+  var existing = _currentScoreData || {};
+  
+  var html = '<div style="padding:0">';
+  
+  // Validation status banner
+  var validado = perfil.datos_validados || false;
+  html += '<div style="background:'+(validado?'rgba(58,125,68,0.12)':'rgba(231,76,60,0.1)')+';border:1px solid '+(validado?'rgba(58,125,68,0.3)':'rgba(231,76,60,0.2)')+';border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">';
+  html += '<span style="font-size:13px;color:'+(validado?'var(--green-light)':'#E74C3C')+'">'+(validado?'&#x2713; Datos del cliente validados':'&#x26A0; Datos pendientes de validaci&#243;n')+'</span>';
+  if(!validado) html += '<span style="font-size:11px;color:rgba(255,255,255,0.4)">Score reducido 15% hasta validar</span>';
+  html += '</div>';
+
+  // Auto scores
+  html += '<div class="card-title" style="margin-bottom:12px">Scores autom&#225;ticos (del formulario)</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">';
+  html += _scoreMiniCard('Ratio deuda/ingreso', autoScores.ratio_deuda, 80);
+  html += _scoreMiniCard('Flujo libre', autoScores.flujo_libre, 80);
+  html += _scoreMiniCard('Control de gastos', autoScores.gastos, 60);
+  html += '</div>';
+
+  // Client declared fields
+  html += '<div class="card-title" style="margin-bottom:12px">Informaci&#243;n declarada por el cliente</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">';
+  
+  // Tipo empleo
+  html += '<div><label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Tipo de empleo</label>';
+  html += '<select class="status-sel" id="sTipoEmpleo" style="margin-bottom:0">';
+  ['','Empleado formal','Empleado informal','Independiente/Freelance','Empresario','Rentista','Sin empleo'].forEach(function(o){
+    html += '<option'+(existing.tipo_empleo===o?' selected':'')+'>'+o+'</option>';
+  });
+  html += '</select></div>';
+  
+  // Tiempo empleo
+  html += '<div><label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Tiempo en empleo actual</label>';
+  html += '<select class="status-sel" id="sTiempoEmpleo" style="margin-bottom:0">';
+  ['','Menos de 6 meses','6-12 meses','1-3 a&#241;os','3-5 a&#241;os','M&#225;s de 5 a&#241;os'].forEach(function(o){
+    html += '<option'+(existing.tiempo_empleo===o?' selected':'')+'>'+o+'</option>';
+  });
+  html += '</select></div>';
+  
+  // Historial pagos
+  html += '<div><label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Historial de pagos declarado</label>';
+  html += '<select class="status-sel" id="sHistorial" style="margin-bottom:0">';
+  ['','Siempre al d&#237;a','Alguna mora menor','Moras frecuentes','En mora actualmente'].forEach(function(o){
+    html += '<option'+(existing.historial_pagos===o?' selected':'')+'>'+o+'</option>';
+  });
+  html += '</select></div></div>';
+
+  // External scores (optional)
+  html += '<div class="card-title" style="margin-bottom:12px">Scores externos (opcionales)</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">';
+  
+  html += '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+  html += '<span style="font-size:13px;font-weight:600">DataCr&#233;dito / TransUnion</span>';
+  html += '<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="chkDC"'+(existing.tiene_datacredito?' checked':'')+' onchange="toggleExtScore(0)"> Disponible</label>';
+  html += '</div>';
+  html += '<input class="diag-input" id="valDC" type="number" placeholder="Score (300-850)" style="font-size:14px;padding:10px;'+(existing.tiene_datacredito?'':'opacity:0.4')+'" '+(existing.tiene_datacredito?'':'disabled')+' value="'+(existing.valor_datacredito||'')+'">';
+  html += '</div>';
+  
+  html += '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+  html += '<span style="font-size:13px;font-weight:600">ProUsuario</span>';
+  html += '<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="chkPU"'+(existing.tiene_prousuario?' checked':'')+' onchange="toggleExtScore(1)"> Disponible</label>';
+  html += '</div>';
+  html += '<input class="diag-input" id="valPU" type="number" placeholder="Score (0-999)" style="font-size:14px;padding:10px;'+(existing.tiene_prousuario?'':'opacity:0.4')+'" '+(existing.tiene_prousuario?'':'disabled')+' value="'+(existing.valor_prousuario||'')+'">';
+  html += '</div>';
+  html += '</div>';
+
+  // Finexo validation score
+  html += '<div class="card-title" style="margin-bottom:12px">Validaci&#243;n Finexo <span style="color:var(--gold);font-size:11px">(hasta 70 pts)</span></div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:18px">';
+  html += '<div><label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Puntos asignados (0-70)</label>';
+  html += '<input class="diag-input" id="sFinexo" type="number" min="0" max="70" placeholder="0-70" value="'+(existing.score_validado_finexo||0)+'" style="font-size:16px;padding:12px"></div>';
+  html += '<div><label style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-bottom:4px">Notas de scoring</label>';
+  html += '<textarea class="notes-ta" id="sNotas" style="min-height:60px">'+(existing.notas_scoring||'')+'</textarea></div>';
+  html += '</div>';
+
+  // Preview total
+  html += '<div id="scorePreview" style="margin-bottom:14px"></div>';
+  html += '<button class="update-btn" style="width:100%" onclick="calcAndSaveScore()">&#x1F4CA; Calcular y guardar score</button>';
+  html += '</div>';
+
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('detailModal').classList.add('open');
+  
+  // Store auto scores for calculation
+  window._autoScores = autoScores;
+  window._diagValidado = validado;
+  updateScorePreview();
+}
+
+function _scoreMiniCard(label, val, max) {
+  var pct = Math.round((val/max)*100);
+  var color = pct >= 70 ? 'var(--green-light)' : pct >= 40 ? 'var(--gold)' : '#E74C3C';
+  return '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">'
+    +'<div style="font-size:22px;font-weight:700;color:'+color+'">'+val+'</div>'
+    +'<div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px">/ '+max+'</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px">'+label+'</div>'
+    +'</div>';
+}
+
+function toggleExtScore(type) {
+  var chk = document.getElementById(type===0?'chkDC':'chkPU');
+  var inp = document.getElementById(type===0?'valDC':'valPU');
+  if(!chk||!inp) return;
+  inp.disabled = !chk.checked;
+  inp.style.opacity = chk.checked ? '1' : '0.4';
+  updateScorePreview();
+}
+
+function getScoreEstabilidad(tipo, tiempo) {
+  var base = 0;
+  if(tipo==='Empleado formal') base=30;
+  else if(tipo==='Empresario') base=25;
+  else if(tipo==='Rentista') base=20;
+  else if(tipo==='Independiente/Freelance') base=15;
+  else if(tipo==='Empleado informal') base=8;
+  var bonus = 0;
+  if(tiempo==='M\u00e1s de 5 a\u00f1os') bonus=30;
+  else if(tiempo==='3-5 a\u00f1os') bonus=22;
+  else if(tiempo==='1-3 a\u00f1os') bonus=15;
+  else if(tiempo==='6-12 meses') bonus=8;
+  else if(tiempo==='Menos de 6 meses') bonus=3;
+  return Math.min(60, base+bonus);
+}
+
+function getScoreHistorial(h) {
+  if(h==='Siempre al d\u00eda') return 60;
+  if(h==='Alguna mora menor') return 35;
+  if(h==='Moras frecuentes') return 15;
+  if(h==='En mora actualmente') return 0;
+  return 0;
+}
+
+function getScoreDatacredito(val) {
+  var v = parseInt(val)||0;
+  if(v >= 750) return 50;
+  if(v >= 650) return 35;
+  if(v >= 550) return 20;
+  if(v >= 450) return 10;
+  return 0;
+}
+
+function getScoreProusuario(val) {
+  var v = parseInt(val)||0;
+  if(v >= 800) return 40;
+  if(v >= 600) return 25;
+  if(v >= 400) return 15;
+  if(v >= 200) return 5;
+  return 0;
+}
+
+function updateScorePreview() {
+  var auto = window._autoScores || {ratio_deuda:0, flujo_libre:0, gastos:0};
+  var tipo = (document.getElementById('sTipoEmpleo')||{}).value||'';
+  var tiempo = (document.getElementById('sTiempoEmpleo')||{}).value||'';
+  var hist = (document.getElementById('sHistorial')||{}).value||'';
+  var finexoPts = parseInt((document.getElementById('sFinexo')||{}).value)||0;
+  var hasDC = (document.getElementById('chkDC')||{}).checked||false;
+  var valDC = (document.getElementById('valDC')||{}).value||'0';
+  var hasPU = (document.getElementById('chkPU')||{}).checked||false;
+  var valPU = (document.getElementById('valPU')||{}).value||'0';
+
+  var sEst = getScoreEstabilidad(tipo, tiempo);
+  var sHist = getScoreHistorial(hist);
+  var sDC = hasDC ? getScoreDatacredito(valDC) : 0;
+  var sPU = hasPU ? getScoreProusuario(valPU) : 0;
+  var sFinexo = Math.min(70, Math.max(0, finexoPts));
+  
+  var scoreObj = {
+    ratio_deuda: auto.ratio_deuda,
+    flujo_libre: auto.flujo_libre,
+    gastos: auto.gastos,
+    estabilidad: sEst,
+    historial: sHist,
+    datacredito: sDC,
+    prousuario: sPU,
+    finexo: sFinexo
+  };
+  
+  var total = calcScoreTotal(scoreObj, window._diagValidado||false);
+  var nivel = scoreNivel(total);
+  
+  var breakdown = [
+    ['Ratio deuda/ingreso', auto.ratio_deuda, 80],
+    ['Flujo libre', auto.flujo_libre, 80],
+    ['Control gastos', auto.gastos, 60],
+    ['Estabilidad laboral', sEst, 60],
+    ['Historial pagos', sHist, 60],
+    ['DataCr\u00e9dito', sDC, 50],
+    ['ProUsuario', sPU, 40],
+    ['Validaci\u00f3n Finexo', sFinexo, 70]
+  ];
+  
+  var html = '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+  html += '<span style="font-size:13px;font-weight:600">Score estimado</span>';
+  html += '<div style="text-align:right"><span style="font-family:Cormorant Garamond,serif;font-size:32px;font-weight:700;color:'+nivel.color+'">'+total+'</span><span style="color:rgba(255,255,255,0.3);font-size:13px"> / 500</span></div>';
+  html += '</div>';
+  html += '<div style="height:6px;background:rgba(255,255,255,0.07);border-radius:3px;margin-bottom:10px;overflow:hidden"><div style="height:100%;width:'+Math.round((total/500)*100)+'%;background:'+nivel.color+';border-radius:3px;transition:width .3s"></div></div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  html += '<span style="font-size:11px;color:rgba(255,255,255,0.4)">'+(!window._diagValidado?'&#x26A0; Sin validar (score -15%)':'&#x2713; Datos validados')+'</span>';
+  html += '<span style="font-size:12px;font-weight:700;color:'+nivel.color+'">'+nivel.nivel+'</span>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">';
+  breakdown.forEach(function(b){
+    if(b[1]>0) {
+      html += '<div style="font-size:11px;color:rgba(255,255,255,0.5);display:flex;justify-content:space-between;padding:2px 0">';
+      html += '<span>'+b[0]+'</span><span style="color:var(--white)">'+b[1]+'/'+b[2]+'</span></div>';
+    }
+  });
+  html += '</div></div>';
+  
+  var el = document.getElementById('scorePreview');
+  if(el) el.innerHTML = html;
+  
+  // Store for save
+  window._scoreToSave = {
+    scoreObj: scoreObj,
+    total: total,
+    nivel: nivel.nivel,
+    tipo_empleo: tipo,
+    tiempo_empleo: tiempo,
+    historial_pagos: hist,
+    tiene_datacredito: hasDC,
+    valor_datacredito: hasDC ? parseInt(valDC)||null : null,
+    tiene_prousuario: hasPU,
+    valor_prousuario: hasPU ? parseInt(valPU)||null : null,
+    score_validado_finexo: sFinexo,
+    notas_scoring: (document.getElementById('sNotas')||{}).value||''
+  };
+}
+
+async function calcAndSaveScore() {
+  if(!window._scoreToSave || !_currentScoreUserId || !_currentScoreDiagId) return;
+  var s = window._scoreToSave;
+  var data = {
+    user_id: _currentScoreUserId,
+    diagnostico_id: _currentScoreDiagId,
+    score_ratio_deuda: s.scoreObj.ratio_deuda,
+    score_flujo_libre: s.scoreObj.flujo_libre,
+    score_gastos: s.scoreObj.gastos,
+    score_estabilidad_laboral: s.scoreObj.estabilidad,
+    score_historial_pagos: s.scoreObj.historial,
+    score_datacredito: s.scoreObj.datacredito,
+    tiene_datacredito: s.tiene_datacredito,
+    valor_datacredito: s.valor_datacredito,
+    score_prousuario: s.scoreObj.prousuario,
+    tiene_prousuario: s.tiene_prousuario,
+    valor_prousuario: s.valor_prousuario,
+    score_validado_finexo: s.score_validado_finexo,
+    notas_scoring: s.notas_scoring,
+    tipo_empleo: s.tipo_empleo,
+    tiempo_empleo: s.tiempo_empleo,
+    historial_pagos: s.historial_pagos,
+    score_total: s.total,
+    nivel: s.nivel,
+    datos_cliente_validados: window._diagValidado||false,
+    validado_por: _user.id,
+    validado_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  var r;
+  if(_currentScoreData && _currentScoreData.id) {
+    r = await _supa.from('scores').update(data).eq('id', _currentScoreData.id);
+  } else {
+    data.created_at = new Date().toISOString();
+    r = await _supa.from('scores').insert(data);
+  }
+  if(r.error) {
+    alert('Error guardando score: ' + r.error.message);
+  } else {
+    var ok = document.getElementById('updateOk');
+    if(ok) { ok.textContent = '\u2713 Score guardado'; ok.style.display='inline'; setTimeout(function(){ ok.style.display='none'; ok.textContent='\u2713 Guardado'; },3000); }
+    closeDetail();
+    loadAdminSol();
+  }
+}
+
+// View score in admin sol table
+async function viewScore(userId, diagId) {
+  await openScorePanel(userId, diagId);
+}
+
+async function openUserScore(userId) {
+  // Get latest diagnostico for this user
+  var dr = await _supa.from('diagnosticos').select('id').eq('user_id', userId).order('created_at', {ascending:false}).limit(1);
+  var diagId = dr.data && dr.data.length > 0 ? dr.data[0].id : null;
+  if(!diagId) {
+    alert('Este usuario no tiene solicitudes todav\u00eda. El score requiere al menos un diagn\u00f3stico.');
+    return;
+  }
+  await openScorePanel(userId, diagId);
+}
+
+
+async function _loadClientPerfil(userId) {
+  var r = await _supa.from('perfiles').select('*').eq('id', userId).single();
+  return r.data || null;
+}
+
+async function toggleValidarPerfil(userId, btn) {
+  var r = await _supa.from('perfiles').select('datos_validados').eq('id', userId).single();
+  var current = r.data ? r.data.datos_validados : false;
+  var newVal = !current;
+  await _supa.from('perfiles').upsert({
+    id: userId,
+    datos_validados: newVal,
+    validado_por: _user.id,
+    validado_at: new Date().toISOString()
+  });
+  btn.textContent = newVal ? 'Quitar validaci\u00f3n' : '\u2713 Validar datos';
+  btn.style.borderColor = newVal ? 'rgba(231,76,60,0.3)' : 'rgba(58,125,68,0.3)';
+  var statusEl = btn.previousElementSibling;
+  if(statusEl) { statusEl.textContent = newVal ? '\u2713 Datos validados' : '\u26A0 Sin validar'; statusEl.style.color = newVal ? 'var(--green-light)' : 'rgba(255,255,255,0.4)'; }
+  window._diagValidado = newVal;
+}
+
 function closeDetail() { document.getElementById('detailModal').classList.remove('open'); }
 document.addEventListener('click', function(e) { if(e.target.id === 'detailModal') closeDetail(); });
 </script>
@@ -1145,7 +1612,7 @@ function renderStep(s){
   setProgress(s);
   var c=document.getElementById('diagForm');
   if(!c) return;
-  var steps=[renderMoneda,renderSituacion,renderDeudas,renderIngresos,renderGastos,renderObjetivo,renderContacto,renderResumen];
+  var steps=[renderBienvenida,renderSituacion,renderDeudas,renderIngresos,renderGastos,renderObjetivo,renderContacto,renderResumen];
   if(steps[s]) steps[s](c);
 }
 
@@ -1157,28 +1624,16 @@ function mkStep(q,hint,body,back,fn,lbl){
   return '<div class="diag-step"><div class="diag-question">'+q+'</div><div class="diag-hint">'+hint+'</div>'+body+mkNav(back,fn,lbl)+'</div>';
 }
 
-// STEP 0 - Moneda
-function renderMoneda(c){
+// STEP 0 - Bienvenida
+function renderBienvenida(c){
   var u=_getUser();
-  var html='<div style="text-align:center;padding:20px 0 10px">';
-  html+='<div style="font-size:40px;margin-bottom:8px">&#x1F44B;</div>';
-  html+='<div style="font-size:16px;color:var(--white);margin-bottom:4px">Hola, <strong>'+u.nombre+'</strong></div>';
-  html+='<div style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px">Completemos tu diagn&#243;stico financiero</div>';
+  var html='<div style="text-align:center;padding:20px 0">';
+  html+='<div style="font-size:48px;margin-bottom:12px">&#x1F44B;</div>';
+  html+='<div style="font-size:18px;color:var(--white);margin-bottom:6px">Hola, <strong>'+u.nombre+'</strong></div>';
+  html+='<div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.7">Tu diagn&#243;stico es <strong>confidencial</strong> y ser&#225;<br>revisado por un asesor de Finexo Advisory.</div>';
   html+='</div>';
-  html+='<div class="diag-label" style="margin-bottom:8px">&#191;En qu&#233; moneda manejas tus finanzas?</div>';
-  html+='<div class="diag-options" style="justify-content:center">';
-  html+='<button class="diag-opt'+(diagData.moneda==='RD$'?' selected':'')+'" onclick="selMoneda(0,this)" style="min-width:120px;font-size:16px;font-weight:700">&#x1F1E9;&#x1F1F4; RD$</button>';
-  html+='<button class="diag-opt'+(diagData.moneda==='US$'?' selected':'')+'" onclick="selMoneda(1,this)" style="min-width:120px;font-size:16px;font-weight:700">&#x1F1FA;&#x1F1F8; US$</button>';
-  html+='</div>';
-  c.innerHTML=mkStep('Bienvenido a tu diagn&#243;stico','Todo lo que ingreses es confidencial y protegido.',html,-1,'nextMoneda()');
+  c.innerHTML=mkStep('Bienvenido a tu diagn&#243;stico','Solo tomar&#225; unos minutos. Completa lo que puedas.',html,-1,'renderStep(1)','Comenzar &#8594;');
 }
-var _monedas=['RD$','US$'];
-function selMoneda(idx,el){
-  diagData.moneda=_monedas[idx];
-  document.querySelectorAll('#diagForm .diag-opt').forEach(function(b){b.classList.remove('selected');});
-  el.classList.add('selected');
-}
-function nextMoneda(){ renderStep(1); }
 
 // STEP 1 - Situacion
 var _sitOpts=['Tengo deudas dif&#237;ciles de pagar','Mis cuotas son muy altas','Estoy en mora con acreedores','Quiero consolidar mis deudas','Necesito mejorar mi historial crediticio','Busco financiamiento nuevo','Mi empresa tiene problemas financieros','Quiero estructurar capital privado'];
@@ -1207,7 +1662,8 @@ function renderDeudas(c){
   for(var i=0;i<diagData.deudas.length;i++){
     var d=diagData.deudas[i];
     var esTC=d.tipo==='Tarjeta de cr&#233;dito';
-    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+d.acreedor+'</strong> ('+d.tipo+') &#8212; '+sym+' '+fmtNum(d.monto)+'<span>Cuota: '+sym+' '+fmtNum(d.cuota_mensual||0)+' &#183; '+d.estado+'</span></div><button class="diag-debt-remove" onclick="removeDebt('+i+')">&#x2715;</button></div>';
+    var dSym=d.moneda||'RD$';
+    html+='<div class="diag-debt-card"><div class="diag-debt-info"><strong>'+d.acreedor+'</strong> ('+d.tipo+') &#8212; '+dSym+' '+fmtNum(d.monto)+'<span>Cuota: '+dSym+' '+fmtNum(d.cuota_mensual||0)+' &#183; '+d.estado+'</span></div><button class="diag-debt-remove" onclick="removeDebt('+i+')">&#x2715;</button></div>';
   }
   var tipoOpts='';
   for(var t=0;t<_tipoDeuda.length;t++){
@@ -1232,10 +1688,17 @@ function renderDeudas(c){
   html+='<div><div class="diag-label">Tasa de inter&#233;s</div><input class="diag-input" id="dT" placeholder="Ej: 28% anual"></div>';
   html+='<div><div class="diag-label">Tiempo restante</div><input class="diag-input" id="dTi" placeholder="Ej: 24 meses"></div>';
   html+='</div>';
-  html+='<div class="diag-label" style="margin-bottom:8px">Estado</div>';
-  html+='<div class="diag-options">';
+  html+='<div class="diag-input-row">';
+  html+='<div><div class="diag-label" style="margin-bottom:8px">Estado</div>';
+  html+='<div class="diag-options" style="flex-wrap:nowrap">';
   html+='<button class="diag-opt'+(selEstado==='al dia'?' selected':'')+'" id="bAlDia" onclick="setEst(0)">&#x2705; Al d&#237;a</button>';
   html+='<button class="diag-opt'+(selEstado==='en mora'?' selected':'')+'" id="bMora" onclick="setEst(1)">&#x26A0;&#xFE0F; En mora</button>';
+  html+='</div></div>';
+  html+='<div><div class="diag-label" style="margin-bottom:8px">Moneda</div>';
+  html+='<select class="diag-input" id="dMoneda" style="font-size:15px;padding:10px">';
+  html+='<option value="RD$">&#x1F1E9;&#x1F1F4; RD$ Pesos</option>';
+  html+='<option value="US$">&#x1F1FA;&#x1F1F8; US$ D&#243;lares</option>';
+  html+='</select></div>';
   html+='</div>';
   html+='<button class="diag-add-btn" onclick="addDebt()">+ Agregar esta deuda</button>';
   c.innerHTML=mkStep('&#191;Cu&#225;les son tus deudas?','Agrega cada deuda por separado.',html,1,'renderStep(3)',diagData.deudas.length?'Continuar &#8594;':'Omitir &#8594;');
@@ -1259,11 +1722,12 @@ function addDebt(){
   var ti=(document.getElementById('dTi')||{}).value||'N/D';
   var limite=(document.getElementById('dLimite')||{}).value||'';
   var balance=(document.getElementById('dBalance')||{}).value||'';
+  var monedaDeuda=(document.getElementById('dMoneda')||{}).value||'RD$';
   if(!tipo){alert('Selecciona el tipo de deuda');return;}
   if(!a||!m){alert('Ingresa el acreedor y el monto');return;}
-  if(!selEstado){alert('Indica si est&#225; al d&#237;a o en mora');return;}
-  var deuda={tipo:tipo,acreedor:a,monto:m,cuota_mensual:cu,tasa:t,tiempo_restante:ti,estado:selEstado};
-  if(tipo==='Tarjeta de cr&#233;dito'){deuda.limite=limite;deuda.balance=balance;}
+  if(!selEstado){alert('Indica si est\u00e1 al d\u00eda o en mora');return;}
+  var deuda={tipo:tipo,acreedor:a,monto:m,cuota_mensual:cu,tasa:t,tiempo_restante:ti,estado:selEstado,moneda:monedaDeuda};
+  if(tipo==='Tarjeta de cr\u00e9dito'){deuda.limite=limite;deuda.balance=balance;}
   diagData.deudas.push(deuda);
   selEstado=''; renderDeudas(document.getElementById('diagForm'));
 }
