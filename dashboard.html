@@ -749,13 +749,22 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
                 <label>Notas de scoring</label>
                 <textarea id="apNotasScoring" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:10px;color:var(--white);font-family:Outfit,sans-serif;font-size:13px;outline:none;resize:vertical;min-height:60px" placeholder="Observaciones del asesor..."></textarea>
               </div>
-              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;color:rgba(255,255,255,0.5)">
-                <input type="checkbox" id="apMostrarScore"> Mostrar score al cliente
-              </label>
             </div>
           </div>
 
           <div id="apScorePreview" style="margin-bottom:16px"></div>
+          
+          <div style="background:rgba(58,125,68,0.08);border:1px solid rgba(58,125,68,0.2);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--white)">Visibilidad del score</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px">El cliente ver&#225; su score en su perfil</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="apMostrarScore" style="width:18px;height:18px;cursor:pointer">
+              <span style="font-size:13px;color:rgba(255,255,255,0.7)">Mostrar al cliente</span>
+            </label>
+          </div>
+
           <button class="save-btn" style="width:100%;background:linear-gradient(135deg,var(--gold),#9a7a2a)" onclick="adminCalcScore()">&#x1F4CA; Calcular y guardar score</button>
           <div class="save-msg" id="apScoreMsg"></div>
         </div>
@@ -1467,7 +1476,7 @@ async function generateAI(id) {
   if(!item) { if(btn){btn.textContent='&#x2728; Generar an\u00e1lisis IA';btn.disabled=false;} return; }
   
   var prompt = 'Cliente:'+item.nombre+' Tel:'+item.telefono+' Situacion:'+item.situacion+' Deudas:'+item.deudas+' Ingresos:'+item.ingresos+' GastosFijos:'+item.gastos_fijos+' GastosVariables:'+item.gastos_variables+' FlujoLibre:'+item.flujo_libre+' Objetivo:'+item.objetivo;
-  var system = 'Eres analista financiero senior de Finexo Advisory Republica Dominicana. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento 4)Flujo libre real 5)Servicio Finexo recomendado con precio en RD$ 6)Estrategia paso a paso 7)Notas para el asesor.';
+  var system = 'Eres analista financiero senior de Finexo Advisory Republica Dominicana. IMPORTANTE: Todos los montos de Cuota son MENSUALES (no diarios ni anuales). El campo FlujoLibre = Ingresos - Cuotas mensuales - Gastos mensuales. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres financiero ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento (TotalCuotas/Ingresos) 4)Flujo libre mensual real en RD$ 5)Servicio Finexo mas adecuado con precio estimado en RD$ 6)Estrategia de accion paso a paso 7)Notas confidenciales para el asesor. Responde en espanol.';
   
   try {
     var resp = await fetch('https://square-frog-0e47.finexo-gf.workers.dev', {
@@ -2734,7 +2743,7 @@ function submitDiag(){
 
   // Generate brief client analysis via AI
   var prompt='Cliente:'+u.nombre+' Situacion:'+diagData.situacion.join(',')+' Deudas:'+dTxt+' Ingresos:'+iTxt+' GastosFijos:'+gfTxt+' GastosVariables:'+gvTxt+' FlujoLibre:'+fl+' Objetivo:'+diagData.objetivo;
-  var sysClient='Eres asesor financiero de Finexo Advisory RD. Basado en este perfil genera un analisis MUY BREVE (max 4 oraciones) para el cliente con: 1)Su situacion actual en una frase 2)Nivel de urgencia (Alta/Media/Baja) con una razon breve 3)Plan recomendado en una frase. Responde en espanol, tono profesional pero empático. NO incluyas numeros detallados ni jerga tecnica.';
+  var sysClient='Eres asesor de Finexo Advisory RD. IMPORTANTE: Todos los montos de cuota son MENSUALES. Basado en este perfil genera un mensaje MUY BREVE (max 4 oraciones) para el cliente indicando: 1)Su situacion financiera actual en una frase simple 2)Nivel de urgencia de atencion (Alta/Media/Baja) con una razon breve 3)Cual servicio de Finexo Advisory le recomiendas contratar y por que (menciona el nombre del servicio: Consulta Puntual, Diagnostico, Plan de Reestructuracion, Negociacion, Empresarial o Finexo 360). Tono profesional y empático. NO menciones acciones que el cliente puede hacer solo.';
   
   var clientAnalysis = '';
   fetch(CF_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sysClient,messages:[{role:'user',content:prompt}]})})
