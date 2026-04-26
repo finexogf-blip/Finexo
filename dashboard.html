@@ -595,6 +595,29 @@ tbody td{padding:12px 13px;font-size:13px;color:rgba(255,255,255,0.75);}
         </div>
       </div>
 
+      <!-- Score Finexo (visible solo si admin lo habilita) -->
+      <div id="clientScoreCard" style="display:none;margin-bottom:16px">
+        <div class="card" style="border-color:rgba(200,169,81,0.3);background:rgba(200,169,81,0.05)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div class="card-title" style="color:var(--gold);margin-bottom:2px">Score Finexo Advisory</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.3)">Evaluaci&#243;n crediticia y financiera</div>
+            </div>
+            <div style="text-align:right">
+              <div id="clientScoreNum" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:var(--gold);line-height:1">—</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.3)">/ 500</div>
+            </div>
+          </div>
+          <div id="clientScoreBar" style="height:8px;background:rgba(255,255,255,0.07);border-radius:4px;margin-bottom:8px;overflow:hidden">
+            <div id="clientScoreBarFill" style="height:100%;width:0%;background:var(--gold);border-radius:4px;transition:width .5s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div id="clientScoreNivel" style="font-size:13px;font-weight:600;color:var(--gold)"></div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3)">Actualizado por Finexo Advisory</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Progress bar -->
       <div class="card" style="margin-bottom:16px">
         <div class="card-title">Completar perfil</div>
@@ -948,6 +971,8 @@ async function loadInicio() {
   document.getElementById('statActivas').textContent = items.filter(function(i){ return i.estatus !== 'Completado' && i.estatus !== 'Cancelado'; }).length;
   document.getElementById('statDone').textContent = items.filter(function(i){ return i.estatus === 'Completado'; }).length;
   document.getElementById('statPerfil').innerHTML = calcProgress(_perfil) + '<span>%</span>';
+  // Refresh score display if on perfil page
+  if(_perfil) _renderClientScore(_perfil);
   var cont = document.getElementById('recentSol');
   if(!items.length) {
     cont.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>No tienes solicitudes a&#250;n. Usa el bot&#243;n <strong>+ Nuevo Diagn&#243;stico</strong> para comenzar.</div></div>';
@@ -1143,6 +1168,31 @@ function fillPerfilForm(p) {
       .concat(gv.map(function(g){ return {concepto:g.categoria||g.concepto||'',tipo:'variable',monto:parseFloat(g.monto)||0}; }));
   } catch(e){ _perfilGastos=[]; }
   _renderPerfilGastos();
+  
+  // Show Finexo score if admin enabled it
+  _renderClientScore(p);
+}
+
+function _renderClientScore(p) {
+  var card = document.getElementById('clientScoreCard');
+  if(!card) return;
+  if(p && p.mostrar_score_cliente && p.score_total > 0) {
+    card.style.display = 'block';
+    var num = document.getElementById('clientScoreNum');
+    var fill = document.getElementById('clientScoreBarFill');
+    var nivel = document.getElementById('clientScoreNivel');
+    if(num) num.textContent = p.score_total;
+    if(fill) fill.style.width = Math.round((p.score_total/500)*100) + '%';
+    if(nivel) {
+      var n = scoreNivel(p.score_total);
+      nivel.textContent = n.nivel;
+      nivel.style.color = n.color;
+      if(num) num.style.color = n.color;
+      if(fill) fill.style.background = n.color;
+    }
+  } else {
+    card.style.display = 'none';
+  }
 }
 
 // Override updateProgress to use new fields
