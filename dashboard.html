@@ -1553,15 +1553,22 @@ async function generateAI(id) {
   ].join('\n');
   
   var system = 'Eres analista financiero senior de Finexo Advisory Republica Dominicana. '+
-    'REGLA CRITICA: AL_CORRIENTE significa que el cliente esta al dia con sus pagos, NO es frecuencia diaria. '+
-    'Todos los montos de cuotas y gastos son MENSUALES. '+
+    'REGLAS CRITICAS: '+
+    '1) AL_CORRIENTE significa que el cliente esta al dia con sus pagos, NO es frecuencia diaria. '+
+    '2) Todos los montos de cuotas y gastos son MENSUALES. '+
+    '3) GARANTIAS: Si una deuda tiene garantia (vehiculo, hipoteca, propiedad u otro bien), '+
+    'NO proponer consolidacion de esa deuda. En su lugar proponer plan de pago acelerado '+
+    'o renegociacion directa con el acreedor. Verificar siempre clausulas de prepago. '+
+    '4) Para deudas sin garantia: se puede proponer consolidacion si mejora el flujo del cliente. '+
+    '5) Cuando hay mezcla de deudas con y sin garantia, aplicar estrategia de avalancha: '+
+    'liquidar primero la deuda sin garantia de mayor tasa, luego acelerar la garantizada. '+
     'Proporciona: 1)Resumen ejecutivo del caso '+
     '2)Nivel de estres financiero: ALTO/MEDIO/BAJO con justificacion '+
     '3)Ratio de endeudamiento = suma cuotas mensuales / ingresos mensuales (en porcentaje) '+
     '4)Flujo libre mensual real en RD$ '+
     '5)Servicio Finexo mas adecuado con precio estimado en RD$ '+
-    '6)Plan de accion recomendado paso a paso '+
-    '7)Notas confidenciales para el asesor. '+
+    '6)Plan de accion recomendado paso a paso (respetando restricciones de garantias) '+
+    '7)Notas confidenciales para el asesor incluyendo tipo de garantia detectada. '+
     'Responde en espanol, formato claro con secciones numeradas.';
   
   try {
@@ -2837,7 +2844,14 @@ function submitDiag(){
     ' GastosVariablesMensuales:'+gvTxt+
     ' FlujoLibreMensual:'+fl+
     ' Objetivo:'+diagData.objetivo;
-  var sysClient='Eres asesor de Finexo Advisory RD. IMPORTANTE: Todos los montos de cuota son MENSUALES. Basado en este perfil genera un mensaje MUY BREVE (max 4 oraciones) para el cliente indicando: 1)Su situacion financiera actual en una frase simple 2)Nivel de urgencia de atencion (Alta/Media/Baja) con una razon breve 3)Cual servicio de Finexo Advisory le recomiendas contratar y por que (menciona el nombre del servicio: Consulta Puntual, Diagnostico, Plan de Reestructuracion, Negociacion, Empresarial o Finexo 360). Tono profesional y empático. NO menciones acciones que el cliente puede hacer solo.';
+  var sysClient='Eres asesor de Finexo Advisory RD. IMPORTANTE: Todos los montos de cuota son MENSUALES. '+
+    'Si detectas deudas con garantia (vehiculo, hipoteca, propiedad), NO sugieras consolidacion. '+
+    'Genera un mensaje MUY BREVE (max 4 oraciones) para el cliente indicando: '+
+    '1)Su situacion financiera actual en una frase simple '+
+    '2)Nivel de urgencia de atencion (Alta/Media/Baja) con una razon breve '+
+    '3)Cual servicio de Finexo Advisory le recomiendas contratar y por que '+
+    '(opciones: Consulta Puntual, Diagnostico, Plan de Reestructuracion, Negociacion, Empresarial, Finexo 360). '+
+    'Tono profesional y empatico. NO menciones acciones que el cliente pueda hacer solo.';
   
   var clientAnalysis = '';
   fetch(CF_WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sysClient,messages:[{role:'user',content:prompt}]})})
