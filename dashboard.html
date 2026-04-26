@@ -1475,8 +1475,44 @@ async function generateAI(id) {
   var item = _adminItems.find(function(i){ return i.id === id; }) || _allItems.find(function(i){ return i.id === id; });
   if(!item) { if(btn){btn.textContent='&#x2728; Generar an\u00e1lisis IA';btn.disabled=false;} return; }
   
-  var prompt = 'Cliente:'+item.nombre+' Tel:'+item.telefono+' Situacion:'+item.situacion+' Deudas:'+item.deudas+' Ingresos:'+item.ingresos+' GastosFijos:'+item.gastos_fijos+' GastosVariables:'+item.gastos_variables+' FlujoLibre:'+item.flujo_libre+' Objetivo:'+item.objetivo;
-  var system = 'Eres analista financiero senior de Finexo Advisory Republica Dominicana. IMPORTANTE: Todos los montos de Cuota son MENSUALES (no diarios ni anuales). El campo FlujoLibre = Ingresos - Cuotas mensuales - Gastos mensuales. Analiza este caso y proporciona: 1)Resumen ejecutivo 2)Nivel de estres financiero ALTO/MEDIO/BAJO con razon 3)Ratio de endeudamiento (TotalCuotas/Ingresos) 4)Flujo libre mensual real en RD$ 5)Servicio Finexo mas adecuado con precio estimado en RD$ 6)Estrategia de accion paso a paso 7)Notas confidenciales para el asesor. Responde en espanol.';
+  // Build structured prompt - avoid ambiguous "al dia" being read as "daily"
+  var deudasClean = (item.deudas||'Ninguna').replace(/al dia/gi, 'ESTADO:AL_CORRIENTE').replace(/en mora/gi, 'ESTADO:EN_MORA');
+  var prompt = [
+    'DATOS DEL CLIENTE FINEXO ADVISORY',
+    '===================================',
+    'NOTA: Todos los montos son en RD$. Todas las cuotas y gastos son MENSUALES.',
+    'ESTADO:AL_CORRIENTE significa que el pago esta al dia (no es frecuencia diaria).',
+    '',
+    'Cliente: ' + item.nombre,
+    'Situacion declarada: ' + (item.situacion||'N/D'),
+    '',
+    'DEUDAS (cuota = pago mensual):',
+    deudasClean,
+    '',
+    'INGRESOS MENSUALES:',
+    (item.ingresos||'No indicado'),
+    '',
+    'GASTOS FIJOS MENSUALES:',
+    (item.gastos_fijos||'No indicado'),
+    '',
+    'GASTOS VARIABLES MENSUALES:',
+    (item.gastos_variables||'No indicado'),
+    '',
+    'FLUJO LIBRE MENSUAL (Ingresos - Cuotas - Gastos): ' + (item.flujo_libre||'No calculado'),
+    'Objetivo del cliente: ' + (item.objetivo||'N/D')
+  ].join('\n');
+  
+  var system = 'Eres analista financiero senior de Finexo Advisory Republica Dominicana. '+
+    'REGLA CRITICA: AL_CORRIENTE significa que el cliente esta al dia con sus pagos, NO es frecuencia diaria. '+
+    'Todos los montos de cuotas y gastos son MENSUALES. '+
+    'Proporciona: 1)Resumen ejecutivo del caso '+
+    '2)Nivel de estres financiero: ALTO/MEDIO/BAJO con justificacion '+
+    '3)Ratio de endeudamiento = suma cuotas mensuales / ingresos mensuales (en porcentaje) '+
+    '4)Flujo libre mensual real en RD$ '+
+    '5)Servicio Finexo mas adecuado con precio estimado en RD$ '+
+    '6)Plan de accion recomendado paso a paso '+
+    '7)Notas confidenciales para el asesor. '+
+    'Responde en espanol, formato claro con secciones numeradas.';
   
   try {
     var resp = await fetch('https://square-frog-0e47.finexo-gf.workers.dev', {
@@ -2742,7 +2778,15 @@ function submitDiag(){
   }).catch(function(e){console.error('W3F:',e);});
 
   // Generate brief client analysis via AI
-  var prompt='Cliente:'+u.nombre+' Situacion:'+diagData.situacion.join(',')+' Deudas:'+dTxt+' Ingresos:'+iTxt+' GastosFijos:'+gfTxt+' GastosVariables:'+gvTxt+' FlujoLibre:'+fl+' Objetivo:'+diagData.objetivo;
+  var dTxtClean = dTxt.replace(/al dia/gi,'AL_CORRIENTE').replace(/en mora/gi,'EN_MORA');
+  var prompt='NOTA: Cuotas y gastos son MENSUALES. AL_CORRIENTE=pago al dia no frecuencia diaria.\n'+
+    'Cliente:'+u.nombre+' Situacion:'+diagData.situacion.join(',')+
+    ' Deudas(cuota=mensual):'+dTxtClean+
+    ' IngresosMensuales:'+iTxt+
+    ' GastosFijosMensuales:'+gfTxt+
+    ' GastosVariablesMensuales:'+gvTxt+
+    ' FlujoLibreMensual:'+fl+
+    ' Objetivo:'+diagData.objetivo;
   var sysClient='Eres asesor de Finexo Advisory RD. IMPORTANTE: Todos los montos de cuota son MENSUALES. Basado en este perfil genera un mensaje MUY BREVE (max 4 oraciones) para el cliente indicando: 1)Su situacion financiera actual en una frase simple 2)Nivel de urgencia de atencion (Alta/Media/Baja) con una razon breve 3)Cual servicio de Finexo Advisory le recomiendas contratar y por que (menciona el nombre del servicio: Consulta Puntual, Diagnostico, Plan de Reestructuracion, Negociacion, Empresarial o Finexo 360). Tono profesional y empático. NO menciones acciones que el cliente puede hacer solo.';
   
   var clientAnalysis = '';
